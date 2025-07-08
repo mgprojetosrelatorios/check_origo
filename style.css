@@ -78,6 +78,10 @@ h2 {
   color: #007BFF; /* Cor do título */
   margin-bottom: 20px;
 }
+h3 {
+  color: #007BFF; /* Cor do título */
+  margin-bottom: 20px;
+}
 
 /* Estilos para o ID da caixa */
 .caixa strong {

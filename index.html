@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.0.6/pizzip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.29.1/docxtemplater.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://unpkg.com/docx@8.1.0/build/index.js"></script>
+
 <head>
   <meta charset="UTF-8">
   <title>Vistoria de Caixas</title>
@@ -8,10 +13,206 @@
 </head>
 <body>
 
-<h2>Vistoria de Caixas</h2>
+<h2>Checklist de Inspeção Técnica – Canalização e Caixas de Passagem (CFTV)</h2>
+
+<!-- Cabeçalho da Inspeção -->
+<div>
+  <label><strong>Usina:</strong></label>
+  <input type="text" name="usina" style="width:100%;"><br>
+  <label><strong>Data:</strong></label>
+  <input type="date" name="data" style="width:100%;"><br>
+  <label><strong>Inspeção realizada por:</strong></label>
+  <input type="text" name="inspetor" style="width:100%;"><br>
+  <label><strong>Equipe técnica:</strong></label>
+  <input type="text" name="equipe" style="width:100%;"><br>
+</div>
+
 
 <form id="formulario">
   <div id="form-container"></div>
+
+
+ <!-- Checklist Final -->
+<div id="form-container">
+  <h3>1. Verificação das Caixas de Passagem</h3>
+  
+  <label>- Quantidade total de caixas está conforme projeto?</label><br>
+  <select name="qtd_caixas">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+  </select><br>
+
+  <label>- Localização de cada caixa condiz com layout encaminhado?</label><br>
+  <select name="loc_caixas">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Profundidade e dimensão adequadas conforme especificações?</label><br>
+  <select name="prof_dim">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Tampa e estrutura da caixa em bom estado e segura?</label><br>
+  <select name="tampa_estrutura">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Presença de guia de passagem (arame/corda) dentro da canalização:</label><br>
+  <select name="guia_passagem">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Possui sinalização ou marcação externa visível?</label><br>
+  <select name="sinalizacao">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Há acúmulo de água ou obstruções no interior?</label><br>
+  <select name="agua_obstrucao">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Caixa está conforme o projeto?</label><br>
+  <select name="caixa_conforme">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Observações:</label><br>
+  <textarea name="obs_caixas" rows="2" style="width:100%;"></textarea>
+
+  <h3>2. Inspeção da Canalização</h3>
+
+  <label>- Caminho da canalização executado conforme layout/projeto?</label><br>
+  <select name="canalizacao_layout">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Há presença de eletrodutos aparentes?</label><br>
+  <select name="eletrodutos_aparentes">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Bitola dos eletrodutos conforme projeto?</label><br>
+  <select name="bitola">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Presença de guia de passagem em todos os trechos?</label><br>
+  <select name="guia_trechos">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Acesso desobstruído para passagem futura de cabos?</label><br>
+  <select name="acesso_cabos">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Identificação de trechos com necessidade de correção ou reexecução?</label><br>
+  <select name="trechos_correcao">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <h3>3. Condições do Terreno e Acesso</h3>
+
+  <label>- Vegetação elevada nas áreas de canalização?</label><br>
+  <select name="vegetacao">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Condições do solo:</label><br>
+  <input type="checkbox" name="solo" value="Firme"> Firme
+  <input type="checkbox" name="solo" value="Úmido"> Úmido
+  <input type="checkbox" name="solo" value="Rochoso"> Rochoso
+  <input type="checkbox" name="solo" value="Arenoso"> Arenoso
+  <input type="text" placeholder="Outro..." name="solo_outro" style="width:100%;"><br>
+
+  <label>- Presença de obstáculos naturais ou antrópicos?</label><br>
+  <select name="obstaculos">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Acesso com veículo utilitário possível?</label><br>
+  <select name="acesso_veiculo">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+    <option value="Parcialmente">Parcialmente</option>
+  </select><br>
+
+  <label>- Riscos ambientais (insetos, animais, buracos)?</label><br>
+  <select name="riscos">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+  </select><br>
+
+  <h3>4. Observações Gerais</h3>
+
+  <label>- Algum ponto fora do traçado previsto?</label><br>
+  <select name="fora_tracado">
+    <option value="">Selecione</option>
+    <option value="Sim">Sim</option>
+    <option value="Não">Não</option>
+  </select><br>
+
+  <label>- Sugestões de ajustes no layout:</label><br>
+  <textarea name="ajustes_layout" rows="2" style="width:100%;"></textarea><br>
+
+  <label>- Situações críticas que exigem intervenção imediata:</label><br>
+  <textarea name="intervencao_critica" rows="2" style="width:100%;"></textarea><br>
+
+  <label>- Comentários adicionais:</label><br>
+  <textarea name="comentarios_finais" rows="2" style="width:100%;"></textarea>
+</div>
+
+
+
   <button type="button" class="button" onclick="gerarPDF()">Gerar PDF</button>
 </form>
 
@@ -89,80 +290,275 @@
     }
   }
 
+  
+  
   // Função para gerar o PDF com jsPDF
-  async function gerarPDF() {
-    // Cria um novo PDF
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const marginLeft = 15;
-    const marginTop = 15;
-    const lineHeight = 7;
+  // async function gerarPDF() {
+  //   // Cria um novo PDF
+  //   const { jsPDF } = window.jspdf;
+  //   const pdf = new jsPDF('p', 'mm', 'a4');
+  //   const marginLeft = 15;
+  //   const marginTop = 15;
+  //   const lineHeight = 7;
     
-    pdf.setFontSize(16);
-    pdf.text("Relatório de Vistoria - Caixas", marginLeft, marginTop);
+  //   pdf.setFontSize(16);
+  //   pdf.text("Relatório de Vistoria - Caixas", marginLeft, marginTop);
     
-    let currentPage = 1;
+  //   let currentPage = 1;
     
-    // Itera por cada caixa, adicionando seus dados em uma nova página (exceto para o primeiro registro)
-    ids.forEach((id, index) => {
-      // Se não for o primeiro, adiciona nova página
-      if(index > 0) {
-        pdf.addPage();
+  //   // Itera por cada caixa, adicionando seus dados em uma nova página (exceto para o primeiro registro)
+  //   ids.forEach((id, index) => {
+  //     // Se não for o primeiro, adiciona nova página
+  //     if(index > 0) {
+  //       pdf.addPage();
+  //     }
+  //     let currentY = marginTop + 10;
+      
+  //     pdf.setFont("helvetica", "bold");
+  //     pdf.setFontSize(14);
+  //     pdf.text(`ID: ${id}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+      
+  //     pdf.setFont("helvetica", "normal");
+  //     pdf.setFontSize(12);
+      
+  //     const form = document.getElementById("formulario");
+  //     const data = new FormData(form);
+      
+  //     const conforme = data.get(id + "_conforme") || "N/A";
+  //     const guia = data.get(id + "_guia") || "N/A";
+  //     const profundidade = data.get(id + "_profundidade") || "N/A";
+  //     const tampa = data.get(id + "_tampa") || "N/A";
+  //     const ident = data.get(id + "_ident") || "N/A";
+  //     const agua = data.get(id + "_agua") || "N/A";
+  //     const obs = data.get(id + "_obs") || "";
+      
+  //     pdf.text(`Conforme Projeto: ${conforme}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+  //     pdf.text(`Guia de Passagem: ${guia}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+  //     pdf.text(`Profundidade OK: ${profundidade}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+  //     pdf.text(`Tampa OK: ${tampa}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+  //     pdf.text(`Identificação: ${ident}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+  //     pdf.text(`Acúmulo de Água: ${agua}`, marginLeft, currentY);
+  //     currentY += lineHeight;
+      
+  //     // Observações (permite quebra de linha se necessário)
+  //     const splittedObs = pdf.splitTextToSize("Observações: " + obs, 180);
+  //     pdf.text(splittedObs, marginLeft, currentY);
+  //     currentY += lineHeight * (splittedObs.length);
+      
+  //     // Se houver imagem, adiciona-a com largura fixa (60 mm) e altura ajustada
+  //     if(imageData[id]) {
+  //       try {
+  //         // A função addImage pode calcular a altura automaticamente se não for informada.
+  //         pdf.addImage(imageData[id], 'JPEG', marginLeft, currentY + 2, 60, 0);
+  //         // Atualiza currentY para evitar sobreposição (a altura é aproximada em 60mm)
+  //         currentY += 65;
+  //       } catch(e) {
+  //         console.error("Erro ao adicionar imagem para " + id, e);
+  //       }
+  //     }
+  //   });
+    
+  //   pdf.save("Relatorio_Vistoria.pdf");
+  // }
+
+async function gerarPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const marginLeft = 15;
+  const marginTop = 15;
+  const lineHeight = 7;
+
+  const form = document.getElementById("formulario");
+  const data = new FormData(form);
+
+  // Cabeçalho
+  const usina = data.get("usina") || "";
+  const dataInspecao = data.get("data") || "";
+  const inspetor = data.get("inspetor") || "";
+  const equipe = data.get("equipe") || "";
+
+  pdf.setFontSize(16);
+  pdf.text("Relatório de Vistoria - Caixas", marginLeft, marginTop);
+
+  pdf.setFontSize(12);
+  pdf.text(`Usina: ${usina}`, marginLeft, marginTop + 8);
+  pdf.text(`Data: ${dataInspecao}`, marginLeft, marginTop + 15);
+  pdf.text(`Inspetor: ${inspetor}`, marginLeft, marginTop + 22);
+  pdf.text(`Equipe: ${equipe}`, marginLeft, marginTop + 29);
+
+  let currentY = marginTop + 40;
+
+  // Itera pelas caixas
+  ids.forEach((id, index) => {
+    if (index > 0) {
+      pdf.addPage();
+      currentY = marginTop;
+    }
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.text(`ID: ${id}`, marginLeft, currentY);
+    currentY += lineHeight;
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(12);
+
+    const conforme = data.get(id + "_conforme") || "N/A";
+    const guia = data.get(id + "_guia") || "N/A";
+    const profundidade = data.get(id + "_profundidade") || "N/A";
+    const tampa = data.get(id + "_tampa") || "N/A";
+    const ident = data.get(id + "_ident") || "N/A";
+    const agua = data.get(id + "_agua") || "N/A";
+    const obs = data.get(id + "_obs") || "";
+
+    pdf.text(`Conforme Projeto: ${conforme}`, marginLeft, currentY); currentY += lineHeight;
+    pdf.text(`Guia de Passagem: ${guia}`, marginLeft, currentY); currentY += lineHeight;
+    pdf.text(`Profundidade OK: ${profundidade}`, marginLeft, currentY); currentY += lineHeight;
+    pdf.text(`Tampa OK: ${tampa}`, marginLeft, currentY); currentY += lineHeight;
+    pdf.text(`Identificação: ${ident}`, marginLeft, currentY); currentY += lineHeight;
+    pdf.text(`Acúmulo de Água: ${agua}`, marginLeft, currentY); currentY += lineHeight;
+
+    const obsLines = pdf.splitTextToSize("Observações: " + obs, 180);
+    pdf.text(obsLines, marginLeft, currentY);
+    currentY += lineHeight * obsLines.length;
+
+    if (imageData[id]) {
+      try {
+        pdf.addImage(imageData[id], 'JPEG', marginLeft, currentY + 2, 60, 0);
+        currentY += 65;
+      } catch (e) {
+        console.error("Erro ao adicionar imagem para " + id, e);
       }
-      let currentY = marginTop + 10;
-      
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(14);
-      pdf.text(`ID: ${id}`, marginLeft, currentY);
-      currentY += lineHeight;
-      
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(12);
-      
-      const form = document.getElementById("formulario");
-      const data = new FormData(form);
-      
-      const conforme = data.get(id + "_conforme") || "N/A";
-      const guia = data.get(id + "_guia") || "N/A";
-      const profundidade = data.get(id + "_profundidade") || "N/A";
-      const tampa = data.get(id + "_tampa") || "N/A";
-      const ident = data.get(id + "_ident") || "N/A";
-      const agua = data.get(id + "_agua") || "N/A";
-      const obs = data.get(id + "_obs") || "";
-      
-      pdf.text(`Conforme Projeto: ${conforme}`, marginLeft, currentY);
-      currentY += lineHeight;
-      pdf.text(`Guia de Passagem: ${guia}`, marginLeft, currentY);
-      currentY += lineHeight;
-      pdf.text(`Profundidade OK: ${profundidade}`, marginLeft, currentY);
-      currentY += lineHeight;
-      pdf.text(`Tampa OK: ${tampa}`, marginLeft, currentY);
-      currentY += lineHeight;
-      pdf.text(`Identificação: ${ident}`, marginLeft, currentY);
-      currentY += lineHeight;
-      pdf.text(`Acúmulo de Água: ${agua}`, marginLeft, currentY);
-      currentY += lineHeight;
-      
-      // Observações (permite quebra de linha se necessário)
-      const splittedObs = pdf.splitTextToSize("Observações: " + obs, 180);
-      pdf.text(splittedObs, marginLeft, currentY);
-      currentY += lineHeight * (splittedObs.length);
-      
-      // Se houver imagem, adiciona-a com largura fixa (60 mm) e altura ajustada
-      if(imageData[id]) {
-        try {
-          // A função addImage pode calcular a altura automaticamente se não for informada.
-          pdf.addImage(imageData[id], 'JPEG', marginLeft, currentY + 2, 60, 0);
-          // Atualiza currentY para evitar sobreposição (a altura é aproximada em 60mm)
-          currentY += 65;
-        } catch(e) {
-          console.error("Erro ao adicionar imagem para " + id, e);
-        }
-      }
-    });
-    
-    pdf.save("Relatorio_Vistoria.pdf");
+    }
+  });
+
+   // Adiciona nova página para o Checklist Final
+  pdf.addPage();
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(14);
+  pdf.text("Checklist Final", marginLeft, marginTop);
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(12);
+
+  let checklistY = marginTop + 10;
+
+  // --- 1. Verificação das Caixas de Passagem ---
+  pdf.setFont("helvetica", "bold");
+  pdf.text("1. Verificação das Caixas de Passagem", marginLeft, checklistY);
+  checklistY += lineHeight;
+
+  const item1 = [
+    ["qtd_caixas", "Quantidade total de caixas conforme projeto"],
+    ["loc_caixas", "Localização condiz com layout"],
+    ["prof_dim", "Profundidade e dimensão conforme especificações"],
+    ["tampa_estrutura", "Tampa e estrutura da caixa seguras"],
+    ["guia_passagem", "Presença de guia de passagem"],
+    ["sinalizacao", "Sinalização ou marcação externa visível"],
+    ["agua_obstrucao", "Acúmulo de água ou obstruções"],
+    ["caixa_conforme", "Caixa conforme o projeto"]
+  ];
+
+  pdf.setFont("helvetica", "normal");
+  item1.forEach(([campo, texto]) => {
+    const val = data.get(campo) || "Não informado";
+    pdf.text(`${texto}: ${val}`, marginLeft, checklistY);
+    checklistY += lineHeight;
+  });
+
+  const obs_caixas = data.get("obs_caixas") || "";
+  if (obs_caixas.trim()) {
+    const obs = pdf.splitTextToSize("Observações: " + obs_caixas, 180);
+    pdf.text(obs, marginLeft, checklistY);
+    checklistY += lineHeight * obs.length;
   }
+
+  // --- 2. Inspeção da Canalização ---
+  checklistY += 5;
+  pdf.setFont("helvetica", "bold");
+  pdf.text("2. Inspeção da Canalização", marginLeft, checklistY);
+  checklistY += lineHeight;
+
+  const item2 = [
+    ["canalizacao_layout", "Canalização conforme layout/projeto"],
+    ["eletrodutos_aparentes", "Eletrodutos aparentes"],
+    ["bitola", "Bitola conforme projeto"],
+    ["guia_trechos", "Guia de passagem em todos os trechos"],
+    ["acesso_cabos", "Acesso desobstruído para passagem futura de cabos"],
+    ["trechos_correcao", "Trechos com necessidade de correção"]
+  ];
+
+  pdf.setFont("helvetica", "normal");
+  item2.forEach(([campo, texto]) => {
+    const val = data.get(campo) || "Não informado";
+    pdf.text(`${texto}: ${val}`, marginLeft, checklistY);
+    checklistY += lineHeight;
+  });
+
+  // --- 3. Condições do Terreno e Acesso ---
+  checklistY += 5;
+  pdf.setFont("helvetica", "bold");
+  pdf.text("3. Condições do Terreno e Acesso", marginLeft, checklistY);
+  checklistY += lineHeight;
+
+  const item3 = [
+    ["vegetacao", "Vegetação elevada nas áreas de canalização"],
+    ["obstaculos", "Presença de obstáculos naturais ou antrópicos"],
+    ["acesso_veiculo", "Acesso com veículo utilitário possível"],
+    ["riscos", "Riscos ambientais (insetos, animais, buracos)"]
+  ];
+
+  pdf.setFont("helvetica", "normal");
+  item3.forEach(([campo, texto]) => {
+    const val = data.get(campo) || "Não informado";
+    pdf.text(`${texto}: ${val}`, marginLeft, checklistY);
+    checklistY += lineHeight;
+  });
+
+  // Solo (checkbox múltipla + texto)
+  const solo = ["Firme", "Úmido", "Rochoso", "Arenoso"];
+  const soloMarcados = solo.filter(s => data.getAll("solo").includes(s));
+  const soloOutro = data.get("solo_outro") || "";
+  const soloFinal = [...soloMarcados, soloOutro].filter(Boolean).join(", ") || "Não informado";
+  pdf.text(`Condições do solo: ${soloFinal}`, marginLeft, checklistY);
+  checklistY += lineHeight;
+
+  // --- 4. Observações Gerais ---
+  checklistY += 5;
+  pdf.setFont("helvetica", "bold");
+  pdf.text("4. Observações Gerais", marginLeft, checklistY);
+  checklistY += lineHeight;
+
+  pdf.setFont("helvetica", "normal");
+  const fora_tracado = data.get("fora_tracado") || "Não informado";
+  pdf.text(`Ponto fora do traçado previsto: ${fora_tracado}`, marginLeft, checklistY);
+  checklistY += lineHeight;
+
+  const textosFinais = [
+    ["ajustes_layout", "Sugestões de ajustes no layout:"],
+    ["intervencao_critica", "Situações críticas que exigem intervenção imediata:"],
+    ["comentarios_finais", "Comentários finais:"]
+  ];
+
+  textosFinais.forEach(([campo, label]) => {
+    const texto = data.get(campo) || "";
+    if (texto.trim()) {
+      const linhas = pdf.splitTextToSize(label + " " + texto, 180);
+      pdf.text(linhas, marginLeft, checklistY);
+      checklistY += lineHeight * linhas.length;
+    }
+  });
+  // Salva o arquivo
+  pdf.save("Relatorio_Vistoria.pdf");
+}
+
+
 </script>
 
 </body>
