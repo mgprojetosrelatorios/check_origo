@@ -384,7 +384,7 @@ async function gerarPDF() {
   const equipe = data.get("equipe") || "";
 
   pdf.setFontSize(16);
-  pdf.text("Relatório de Vistoria - Caixas", marginLeft, marginTop);
+  pdf.text("Checklist de Inspeção Técnica – Canalização e Caixas de Passagem (CFTV)", marginLeft, marginTop);
 
   pdf.setFontSize(12);
   pdf.text(`Usina: ${usina}`, marginLeft, marginTop + 8);
