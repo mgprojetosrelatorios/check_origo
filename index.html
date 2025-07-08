@@ -291,87 +291,24 @@
   }
 
   
-  
-  // Função para gerar o PDF com jsPDF
-  // async function gerarPDF() {
-  //   // Cria um novo PDF
-  //   const { jsPDF } = window.jspdf;
-  //   const pdf = new jsPDF('p', 'mm', 'a4');
-  //   const marginLeft = 15;
-  //   const marginTop = 15;
-  //   const lineHeight = 7;
-    
-  //   pdf.setFontSize(16);
-  //   pdf.text("Relatório de Vistoria - Caixas", marginLeft, marginTop);
-    
-  //   let currentPage = 1;
-    
-  //   // Itera por cada caixa, adicionando seus dados em uma nova página (exceto para o primeiro registro)
-  //   ids.forEach((id, index) => {
-  //     // Se não for o primeiro, adiciona nova página
-  //     if(index > 0) {
-  //       pdf.addPage();
-  //     }
-  //     let currentY = marginTop + 10;
-      
-  //     pdf.setFont("helvetica", "bold");
-  //     pdf.setFontSize(14);
-  //     pdf.text(`ID: ${id}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-      
-  //     pdf.setFont("helvetica", "normal");
-  //     pdf.setFontSize(12);
-      
-  //     const form = document.getElementById("formulario");
-  //     const data = new FormData(form);
-      
-  //     const conforme = data.get(id + "_conforme") || "N/A";
-  //     const guia = data.get(id + "_guia") || "N/A";
-  //     const profundidade = data.get(id + "_profundidade") || "N/A";
-  //     const tampa = data.get(id + "_tampa") || "N/A";
-  //     const ident = data.get(id + "_ident") || "N/A";
-  //     const agua = data.get(id + "_agua") || "N/A";
-  //     const obs = data.get(id + "_obs") || "";
-      
-  //     pdf.text(`Conforme Projeto: ${conforme}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-  //     pdf.text(`Guia de Passagem: ${guia}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-  //     pdf.text(`Profundidade OK: ${profundidade}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-  //     pdf.text(`Tampa OK: ${tampa}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-  //     pdf.text(`Identificação: ${ident}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-  //     pdf.text(`Acúmulo de Água: ${agua}`, marginLeft, currentY);
-  //     currentY += lineHeight;
-      
-  //     // Observações (permite quebra de linha se necessário)
-  //     const splittedObs = pdf.splitTextToSize("Observações: " + obs, 180);
-  //     pdf.text(splittedObs, marginLeft, currentY);
-  //     currentY += lineHeight * (splittedObs.length);
-      
-  //     // Se houver imagem, adiciona-a com largura fixa (60 mm) e altura ajustada
-  //     if(imageData[id]) {
-  //       try {
-  //         // A função addImage pode calcular a altura automaticamente se não for informada.
-  //         pdf.addImage(imageData[id], 'JPEG', marginLeft, currentY + 2, 60, 0);
-  //         // Atualiza currentY para evitar sobreposição (a altura é aproximada em 60mm)
-  //         currentY += 65;
-  //       } catch(e) {
-  //         console.error("Erro ao adicionar imagem para " + id, e);
-  //       }
-  //     }
-  //   });
-    
-  //   pdf.save("Relatorio_Vistoria.pdf");
-  // }
+function inserirCabecalhoPDF(pdf, origoImg, megaImg) {
+  const marginLeft = 15;
+  const logoHeight = 20;
+  const logoY = 10;
+
+  pdf.addImage(origoImg, 'PNG', marginLeft, logoY, 40, logoHeight);
+  pdf.addImage(megaImg, 'JPEG', 150, logoY, 40, logoHeight);
+
+  // Linha separadora opcional
+  pdf.setDrawColor(200);
+  pdf.line(15, logoY + logoHeight + 3, 195, logoY + logoHeight + 3);
+}
 
 async function gerarPDF() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p', 'mm', 'a4');
   const marginLeft = 15;
-  const marginTop = 15;
+  const marginTop = 45;
   const lineHeight = 7;
 
   const form = document.getElementById("formulario");
