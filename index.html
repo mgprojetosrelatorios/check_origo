@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Vistoria de Caixas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Vistoria de Caixas</h2>
+
+<form id="formulario">
+  <div id="form-container"></div>
+  <button type="button" class="button" onclick="gerarPDF()">Gerar PDF</button>
+</form>
+
+<!-- Inclui jsPDF (versão 2.5.1) da CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+  // IDs das caixas conforme sua lista
+  const ids = [
+    "C00","C32","C31","C28","C29","CF22","CM06","CM05","CM04","CM03","CM02",
+    "CF01","CF02","CF03","CF04","CF05","CF06","CF07","CF08","CF09",
+    "CF10","CF11","CF12","CF13","CF14","CF15","CF16","CF17",
+    "CF18","CF19","CF20","CF21"
+  ];
+
+  // Objeto para armazenar a imagem em formato base64 para cada caixa
+  const imageData = {};
+
+  // Cria os campos para cada registro
+  const container = document.getElementById('form-container');
+  ids.forEach(id => {
+    const div = document.createElement('div');
+    div.className = "caixa";
+    div.innerHTML = `
+      <strong>ID: ${id}</strong><br>
+      <label>Conforme Projeto?</label>
+      <select name="${id}_conforme">
+          <option>Sim</option>
+          <option>Não</option>
+      </select>
+      <label>Guia de Passagem?</label>
+      <select name="${id}_guia">
+          <option>Sim</option>
+          <option>Não</option>
+      </select>
+      <label>Profundidade OK?</label>
+      <select name="${id}_profundidade">
+          <option>Sim</option>
+          <option>Não</option>
+      </select>
+      <label>Tampa OK?</label>
+      <select name="${id}_tampa">
+          <option>Sim</option>
+          <option>Não</option>
+      </select>
+      <label>Identificação?</label>
+      <select name="${id}_ident">
+          <option>Sim</option>
+          <option>Não</option>
+      </select>
+      <label>Acúmulo de Água?</label>
+      <select name="${id}_agua">
+          <option>Sim</option>
+          <option>Não</option>
+      </select>
+      <label>Observações:</label>
+      <textarea name="${id}_obs" rows="2"></textarea>
+      <label>Registro Fotográfico:</label>
+      <input type="file" accept="image/*" name="${id}_foto" onchange="previewImage(this, '${id}')">
+      <img class="preview" id="preview_${id}">
+    `;
+    container.appendChild(div);
+  });
+
+  // Função para exibir a pré-visualização da imagem e armazená-la em base64
+  function previewImage(input, id) {
+    const preview = document.getElementById(`preview_${id}`);
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        imageData[id] = e.target.result; // armazena a imagem
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // Função para gerar o PDF com jsPDF
+  async function gerarPDF() {
+    // Cria um novo PDF
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const marginLeft = 15;
+    const marginTop = 15;
+    const lineHeight = 7;
+    
+    pdf.setFontSize(16);
+    pdf.text("Relatório de Vistoria - Caixas", marginLeft, marginTop);
+    
+    let currentPage = 1;
+    
+    // Itera por cada caixa, adicionando seus dados em uma nova página (exceto para o primeiro registro)
+    ids.forEach((id, index) => {
+      // Se não for o primeiro, adiciona nova página
+      if(index > 0) {
+        pdf.addPage();
+      }
+      let currentY = marginTop + 10;
+      
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text(`ID: ${id}`, marginLeft, currentY);
+      currentY += lineHeight;
+      
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+      
+      const form = document.getElementById("formulario");
+      const data = new FormData(form);
+      
+      const conforme = data.get(id + "_conforme") || "N/A";
+      const guia = data.get(id + "_guia") || "N/A";
+      const profundidade = data.get(id + "_profundidade") || "N/A";
+      const tampa = data.get(id + "_tampa") || "N/A";
+      const ident = data.get(id + "_ident") || "N/A";
+      const agua = data.get(id + "_agua") || "N/A";
+      const obs = data.get(id + "_obs") || "";
+      
+      pdf.text(`Conforme Projeto: ${conforme}`, marginLeft, currentY);
+      currentY += lineHeight;
+      pdf.text(`Guia de Passagem: ${guia}`, marginLeft, currentY);
+      currentY += lineHeight;
+      pdf.text(`Profundidade OK: ${profundidade}`, marginLeft, currentY);
+      currentY += lineHeight;
+      pdf.text(`Tampa OK: ${tampa}`, marginLeft, currentY);
+      currentY += lineHeight;
+      pdf.text(`Identificação: ${ident}`, marginLeft, currentY);
+      currentY += lineHeight;
+      pdf.text(`Acúmulo de Água: ${agua}`, marginLeft, currentY);
+      currentY += lineHeight;
+      
+      // Observações (permite quebra de linha se necessário)
+      const splittedObs = pdf.splitTextToSize("Observações: " + obs, 180);
+      pdf.text(splittedObs, marginLeft, currentY);
+      currentY += lineHeight * (splittedObs.length);
+      
+      // Se houver imagem, adiciona-a com largura fixa (60 mm) e altura ajustada
+      if(imageData[id]) {
+        try {
+          // A função addImage pode calcular a altura automaticamente se não for informada.
+          pdf.addImage(imageData[id], 'JPEG', marginLeft, currentY + 2, 60, 0);
+          // Atualiza currentY para evitar sobreposição (a altura é aproximada em 60mm)
+          currentY += 65;
+        } catch(e) {
+          console.error("Erro ao adicionar imagem para " + id, e);
+        }
+      }
+    });
+    
+    pdf.save("Relatorio_Vistoria.pdf");
+  }
+</script>
+
+</body>
+</html>

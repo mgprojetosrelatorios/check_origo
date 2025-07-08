@@ -1,0 +1,89 @@
+/* Estilos gerais para o corpo da página */
+body {
+  font-family: Arial, sans-serif;
+  margin: 10px;
+  background-color: #f4f4f4; /* Cor de fundo suave */
+  color: #333; /* Cor do texto principal */
+}
+
+/* Estilos para cada caixa de vistoria */
+.caixa {
+  border: 1px solid #ddd; /* Borda mais suave */
+  margin-bottom: 15px; /* Mais espaço entre as caixas */
+  padding: 15px;
+  border-radius: 8px; /* Cantos mais arredondados */
+  background-color: #fff; /* Fundo branco para as caixas */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+/* Estilos para os rótulos */
+label {
+  font-size: 14px;
+  font-weight: bold; /* Rótulos em negrito */
+  margin-bottom: 5px;
+  display: block; /* Garante que o rótulo ocupe sua própria linha */
+  color: #555; /* Cor mais escura para os rótulos */
+}
+
+/* Estilos para campos de seleção, áreas de texto e inputs de arquivo */
+select,
+textarea,
+input[type="file"] {
+  width: calc(100% - 20px); /* Ajusta a largura para considerar o padding */
+  padding: 10px;
+  font-size: 14px;
+  margin-bottom: 10px; /* Mais espaço abaixo dos campos */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Garante que padding e borda sejam incluídos na largura */
+}
+
+/* Estilos específicos para áreas de texto */
+textarea {
+  resize: vertical; /* Permite redimensionar verticalmente */
+}
+
+/* Estilos para a pré-visualização da imagem */
+img.preview {
+  max-width: 100px; /* Aumenta o tamanho máximo da pré-visualização */
+  max-height: 100px;
+  margin-top: 10px;
+  display: block;
+  border: 1px solid #eee; /* Borda leve para a imagem */
+  border-radius: 4px;
+}
+
+/* Estilos para o botão */
+.button {
+  margin-top: 20px; /* Mais espaço acima do botão */
+  padding: 12px 20px; /* Aumenta o padding do botão */
+  width: 100%;
+  font-size: 18px; /* Aumenta o tamanho da fonte do botão */
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  border-radius: 5px; /* Cantos mais arredondados */
+  cursor: pointer; /* Indica que é clicável */
+  transition: background-color 0.3s ease; /* Transição suave ao passar o mouse */
+}
+
+/* Efeito ao passar o mouse sobre o botão */
+.button:hover {
+  background-color: #0056b3;
+}
+
+/* Estilos para o título principal */
+h2 {
+  text-align: center; /* Centraliza o título */
+  color: #007BFF; /* Cor do título */
+  margin-bottom: 20px;
+}
+
+/* Estilos para o ID da caixa */
+.caixa strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #007BFF;
+}
+
