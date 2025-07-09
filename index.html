@@ -330,27 +330,31 @@ async function gerarPDF() {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p', 'mm', 'a4');
   const marginLeft = 15;
-  const marginTop = 45;
+  const marginTop = 20;
   const lineHeight = 7;
 
   const form = document.getElementById("formulario");
   const data = new FormData(form);
 
   // Cabeçalho
-  const usina = data.get("usina") || "";
-  const dataInspecao = data.get("data") || "";
-  const inspetor = data.get("inspetor") || "";
-  const equipe = data.get("equipe") || "";
+   // Cabeçalho — agora buscando fora do <form>
+  const usina = document.querySelector('input[name="usina"]').value || "";
+  const dataInspecao = document.querySelector('input[name="data"]').value || "";
+  const inspetor = document.querySelector('input[name="inspetor"]').value || "";
+  const equipe = document.querySelector('input[name="equipe"]').value || "";
 
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(14);
-  pdf.text("Checklist de Inspeção Técnica – Canalização e Caixas de Passagem (CFTV)", marginLeft, marginTop);
+  pdf.text("Checklist de Inspeção Técnica – Canalização e Caixas de Passagem (CFTV)", marginLeft, marginTop);
 
+  pdf.setFont("helvetica", "normal");
   pdf.setFontSize(12);
-  pdf.text(`Usina: ${usina}`, marginLeft, marginTop + 8);
-  pdf.text(`Data: ${dataInspecao}`, marginLeft, marginTop + 15);
-  pdf.text(`Inspetor: ${inspetor}`, marginLeft, marginTop + 22);
-  pdf.text(`Equipe: ${equipe}`, marginLeft, marginTop + 29);
+  pdf.text(`Usina: ${usina}`, marginLeft, marginTop + 10);
+  pdf.text(`Data: ${dataInspecao}`, marginLeft, marginTop + 17);
+  pdf.text(`Inspetor: ${inspetor}`, marginLeft, marginTop + 24);
+  pdf.text(`Equipe: ${equipe}`, marginLeft, marginTop + 31);
 
+  // Começar logo abaixo do cabeçalho
   let currentY = marginTop + 40;
 
   // Itera pelas caixas
