@@ -23,7 +23,7 @@
 <!-- Cabeçalho da Inspeção -->
 <div>
   <label><strong>Usina:</strong></label>
-  <input type="text" name="usina" style="width:100%;"><br>
+  <input type="text" name="usina" style="width:100%;" value="Uberaba 9100"><br>
   <label><strong>Data:</strong></label>
   <input type="date" name="data" style="width:100%;"><br>
   <label><strong>Inspeção realizada por:</strong></label>
@@ -224,8 +224,6 @@
   Limpar Dados
   </button>
 
-  <button type="button" class="button" onclick="gerarDOCX()">Gerar DOCX</button>
-
 
 </form>
 
@@ -235,10 +233,9 @@
 <script>
   // IDs das caixas conforme sua lista
   const ids = [
-    "C00","C32","C31","C28","C29","CF22","CM06","CM05","CM04","CM03","CM02",
-    "CF01","CF02","CF03","CF04","CF05","CF06","CF07","CF08","CF09",
+    "C00","CM03","CM02","CF24","CF01","CF02","CF03","CF04","CF05","CF06","CF07","CF08","CF09",
     "CF10","CF11","CF12","CF13","CF14","CF15","CF16","CF17",
-    "CF18","CF19","CF20","CF21"
+    "CF18","CF19","CF20","CF21", "CF23", "CE03", "CE04", "CE05", "C26", "C25", "C24", "C23", "C22", "C21", "C20", "C19", "C29"
   ];
 
   // Objeto para armazenar a imagem em formato base64 para cada caixa
