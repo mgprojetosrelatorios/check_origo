@@ -4,7 +4,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.29.1/docxtemplater.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://unpkg.com/docx@8.1.0/build/index.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 
 <head>
@@ -24,7 +23,7 @@
 <!-- Cabeçalho da Inspeção -->
 <div>
   <label><strong>Usina:</strong></label>
-  <input type="text" name="usina" style="width:100%;"><br>
+  <input type="text" name="usina" style="width:100%;" value="Uberaba 2995"><br>
   <label><strong>Data:</strong></label>
   <input type="date" name="data" style="width:100%;"><br>
   <label><strong>Inspeção realizada por:</strong></label>
@@ -33,9 +32,6 @@
   <input type="text" name="equipe" style="width:100%;"><br>
 </div>
 
-  <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload();">
-  Limpar Dados
-  </button>
 
 <form id="formulario">
   <div id="form-container"></div>
@@ -222,7 +218,7 @@
 
 
 
-  <button type="button" class="button" onclick="exportarRelatorioZIP()">Exportar ZIP completo</button>
+  <button type="button" class="button" onclick="gerarPDF()">Gerar PDF</button>
 
   <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload();">
   Limpar Dados
@@ -236,7 +232,7 @@
 
 <script>
   // IDs das caixas conforme sua lista
-  const ids = [
+   const ids = [
     "C00", "C12", "C13", "CF28", "CF27", "CF26", "CF25", "CF24", "CF23", "CF22", "CF21", "CF20", "CF19", "CF18", "CF17", "CF16",
     "CF15", "CF14", "CF13", "CF12", "CF11", "CF10", "CF09", "CF08", "CF07", "CF06", "CF05", "CF04", "CF03", "CF02", "CF01", "CM02",
     "CM03", "CM04", "CM05", "CM06", "CM07", "C28", "C27", "C26", "C25", "C24", "C11", "C08", "C07", "C06", "C03", "C04", "C05", "C02", "C01", "CF33"
@@ -636,311 +632,6 @@ function restaurarImagensSalvas() {
     }
   }
 }
-
-function exportarImagensZIP() {
-  const zip = new JSZip();
-  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens") || "{}");
-
-  let count = 0;
-  const linhasCSV = ["ID;Arquivo"];
-
-  for (const [id, base64] of Object.entries(imagens)) {
-    const content = base64.split(",")[1];
-    const mime = base64.split(",")[0].match(/:(.*?);/)[1];
-    const ext = mime.includes("png") ? "png" : "jpg";
-    const nomeArquivo = `${id}.${ext}`;
-
-    zip.file(nomeArquivo, content, { base64: true });
-    linhasCSV.push(`${id};${nomeArquivo}`);
-    count++;
-  }
-
-  if (count === 0) {
-    alert("Nenhuma imagem salva.");
-    return;
-  }
-
-  const csvContent = "\uFEFF" + linhasCSV.join("\n");
-  zip.file("imagens.csv", csvContent);
-
-  zip.generateAsync({ type: "blob" }).then(blob => {
-    saveAs(blob, "imagens_caixas.zip");
-  });
-}
-
-
-function exportarCSV() {
-  const form = document.getElementById("formulario");
-  const data = new FormData(form);
-
-  const header = [
-    "ID Caixa",
-    "Conforme Projeto?",
-    "Guia de Passagem?",
-    "Profundidade OK?",
-    "Tampa OK?",
-    "Identificação?",
-    "Acúmulo de Água?",
-    "Observações"
-  ];
-
-  const linhas = [header.join(";")];
-
-  const normaliza = (val) => {
-    val = val?.toLowerCase();
-    if (val === "sim") return "SIM";
-    if (val === "não" || val === "nao") return "NÃO";
-    if (val === "parcialmente") return "PARCIAL";
-    return "";
-  };
-
-  ids.forEach(id => {
-    const linha = [
-      id,
-      normaliza(data.get(`${id}_conforme`)),
-      normaliza(data.get(`${id}_guia`)),
-      normaliza(data.get(`${id}_profundidade`)),
-      normaliza(data.get(`${id}_tampa`)),
-      normaliza(data.get(`${id}_ident`)),
-      normaliza(data.get(`${id}_agua`)),
-      (data.get(`${id}_obs`) || "-").replace(/[\n\r]+/g, " ").trim()
-    ];
-    linhas.push(linha.join(";"));
-  });
-
-  const csvContent = "\uFEFF" + linhas.join("\n");  // adiciona BOM UTF-8
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-  saveAs(blob, "Relatorio_Caixas.csv");
-}
-
-function exportarRelatorioZIP() {
-  const zip = new JSZip();
-  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens") || "{}");
-  const form = document.getElementById("formulario");
-  const data = new FormData(form);
-
-  const normaliza = val => {
-    val = val?.toLowerCase();
-    if (val === "sim") return "Sim";
-    if (val === "não" || val === "nao") return "Não";
-    if (val === "parcialmente") return "Parcialmente";
-    return val || "Não informado";
-  };
-
-  const imagensFolder = zip.folder("imagens");
-  const csvCaixas = ["ID Caixa;Conforme Projeto?;Guia de Passagem?;Profundidade OK?;Tampa OK?;Identificação?;Acúmulo de Água?;Observações"];
-  const csvImagens = ["ID;Arquivo"];
-
-  // Dados por caixa + imagens
-  ids.forEach(id => {
-    csvCaixas.push([
-      id,
-      normaliza(data.get(`${id}_conforme`)),
-      normaliza(data.get(`${id}_guia`)),
-      normaliza(data.get(`${id}_profundidade`)),
-      normaliza(data.get(`${id}_tampa`)),
-      normaliza(data.get(`${id}_ident`)),
-      normaliza(data.get(`${id}_agua`)),
-      (data.get(`${id}_obs`) || "-").replace(/[\n\r]+/g, " ").trim()
-    ].join(";"));
-
-    const base64 = imagens[id];
-    if (base64) {
-      const content = base64.split(",")[1];
-      const mime = base64.split(",")[0].match(/:(.*?);/)[1];
-      const ext = mime.includes("png") ? "png" : "jpg";
-      const nomeArquivo = `${id}.${ext}`;
-      imagensFolder.file(nomeArquivo, content, { base64: true });
-      csvImagens.push(`${id};${nomeArquivo}`);
-    }
-  });
-
-  // Arquivo CSVs
-  zip.file("dados_caixas.csv", "\uFEFF" + csvCaixas.join("\n"));
-  imagensFolder.file("imagens.csv", "\uFEFF" + csvImagens.join("\n"));
-
-  // Variáveis do checklist
-  const item1 = [
-    ["qtd_caixas", "Quantidade total conforme projeto"],
-    ["loc_caixas", "Localização conforme layout"],
-    ["prof_dim", "Profundidade e dimensão conforme especificações"],
-    ["tampa_estrutura", "Tampa e estrutura seguras"],
-    ["guia_passagem", "Presença de guia de passagem"],
-    ["sinalizacao", "Sinalização ou marcação externa visível"],
-    ["agua_obstrucao", "Acúmulo de água ou obstruções"],
-    ["caixa_conforme", "Caixas em conformidade geral"]
-  ];
-  const item2 = [
-    ["canalizacao_layout", "Conforme layout/projeto"],
-    ["eletrodutos_aparentes", "Eletrodutos aparentes"],
-    ["bitola", "Bitola conforme projeto"],
-    ["guia_trechos", "Guia de passagem presente"],
-    ["acesso_cabos", "Acesso desobstruído"],
-    ["trechos_correcao", "Necessidade de correções"]
-  ];
-  const item3 = [
-    ["vegetacao", "Vegetação elevada"],
-    ["obstaculos", "Obstáculos naturais/antrópicos"],
-    ["acesso_veiculo", "Acesso com veículo utilitário"],
-    ["riscos", "Riscos ambientais identificados"]
-  ];
-  const textosFinais = [
-    ["ajustes_layout", "Sugestões de ajustes no layout:"],
-    ["intervencao_critica", "Situações críticas que exigem intervenção imediata:"],
-    ["comentarios_finais", "Comentários finais:"]
-  ];
-
-  const gerarItemList = (lista) =>
-    lista.map(([campo, label]) =>
-      `\\item ${label}: ${normaliza(data.get(campo))}`
-    ).join("\n");
-
-  const gerarTextoLivre = (lista) =>
-    lista.map(([campo, label]) => {
-      const val = (data.get(campo) || "").trim();
-      return val ? `\\textbf{${label}} ${val.replace(/[\n\r]+/g, " ")}` : "";
-    }).filter(Boolean).join("\n\n");
-
-  const solo = ["Firme", "Úmido", "Rochoso", "Arenoso"]
-    .filter(v => data.getAll("solo").includes(v)).join(", ");
-  const soloOutro = data.get("solo_outro") || "";
-  const soloFinal = [solo, soloOutro].filter(Boolean).join(", ") || "Não informado";
-
-  // .tex
-  const tex = `
-\\documentclass[12pt,a4paper]{article}
-\\usepackage[brazil]{babel}
-\\usepackage[utf8]{inputenc}
-\\usepackage{graphicx}
-\\usepackage[a4paper, top=3cm, bottom=2.5cm, left=2.5cm, right=2.5cm, headheight=20pt, headsep=30pt]{geometry}
-\\usepackage{longtable}
-\\usepackage{array}
-\\usepackage{hyperref}
-\\usepackage{fancyhdr}
-\\usepackage{subcaption}
-\\usepackage{pgffor}
-\\usepackage{caption}
-\\usepackage{float}
-\\usepackage{fp}
-\\usepackage{enumitem}
-\\usepackage{amsmath}
-\\usepackage{pifont}
-\\usepackage{multirow}
-\\usepackage{xcolor}
-\\usepackage{csvsimple}
-\\usepackage[table,xcdraw]{xcolor}
-\\usepackage{lastpage}
-
-\\newcommand{\\usina}{${document.querySelector('[name="usina"]')?.value || "USINA"}}
-\\newcommand{\\data}{${document.querySelector('[name="data"]')?.value || "DATA"}}
-\\newcommand{\\inspetor}{${document.querySelector('[name="inspetor"]')?.value || "INSPETOR"}}
-\\newcommand{\\equipe}{${document.querySelector('[name="equipe"]')?.value || "equipe"}}
-
-
-\\pagestyle{fancy}
-\\fancyhf{}
-\\rhead{\\includegraphics[height=1.2cm]{logo_mega.png}}
-\\lhead{\\includegraphics[height=1.2cm]{logo_origo.png}}
-\\cfoot{
-  \\begin{minipage}[c]{0.85\\textwidth}
-  \\centering
-  \\scriptsize
-  Av. Alexi Abrahão, Nº 338 -- Sala 01 -- Bairro Nova Uberlândia -- CEP: 38.412-622 -- UBERLÂNDIA -- MG\\\\
-  TELEFONE: 0800 940 0708 // (34) 3219-7181 // CELULAR: (34) 9 9171-9543\\\\
-  E-MAIL: projetos@mega.udi.br | WEBSITE: www.mega.udi.br
-  \\end{minipage}
-}
-\\rfoot{\\thepage}
-\\renewcommand{\\footrulewidth}{0.4pt}
-\\renewcommand{\\headrulewidth}{0pt}
-
-\\begin{document}
-
-\\noindent Usina: \\usina
-
-\\noindent Data: \\data
-
-\\noindent Inspeção realizado por: \\inspetor
-
-\\noindent Equipe técnia de Apoio: \\equipe
-
-\\section{OBJETIVO}
-\\noindent Realizar a inspeção técnica das canalizações e caixas de passagem do sistema de CFTV da Fazenda Solar \\usina, avaliando conformidade com projeto executivo, integridade estrutural, condições de acesso, e viabilidade para futura passagem de cabos.
-
-\\section{METODOLOGIA}
-\\noindent A inspeção foi realizada de forma visual e tátil, com auxílio de ferramentas manuais. Foram avaliados os seguintes critérios para cada ponto de inspeção:
-
-\\begin{itemize}
-\\item Conformidade com o projeto (locação e tipo)
-\\item Presença de guia de passagem 
-\\item Profundidade e dimensões
-\\item Condição da tampa
-\\item Identificação Visível 
-\\item Presença de acúmulo de água 
-\\item Outras observações relavantes
-\\end{itemize}
-
-\\section{RESULTADOS POR PONTO DE INSPEÇÃO}
-\\includegraphics[width=\\textwidth]{dados_caixa.png}
-
-\\section{Checklist Final}
-
-\\subsection{Verificação das Caixas de Passagem}
-\\begin{itemize}
-${gerarItemList(item1)}
-\\end{itemize}
-
-\\subsection{Inspeção da Canalização}
-\\begin{itemize}
-${gerarItemList(item2)}
-\\end{itemize}
-
-\\subsection{Condições do Terreno e Acesso}
-\\begin{itemize}
-${gerarItemList(item3)}
-\\item Condição do solo: ${soloFinal}
-\\end{itemize}
-
-\\subsection{Observações Finais}
-${gerarTextoLivre(textosFinais)}
-
-\\section{CONCLUSÃO}
-
-\\section{RECOMENDAÇÕES}
-
-
-\\section{ANEXO IMAGENS}
-
-\\newcommand{\\incluirImagem}[2]{%
-\\begin{figure}[H]
-    \\centering
-    \\includegraphics[width=0.5\\textwidth]{imagens/#2}
-    \\caption{Registro fotográfico da caixa de passagem - #1}
-\\end{figure}
-}
-
-\\csvreader[
-    separator=semicolon,
-    head to column names
-]{imagens/imagens.csv}{}%
-{%
-  \\incluirImagem{\\ID}{\\Arquivo}
-}
-
-\\end{document}
-`.trim();
-
-  zip.file("relatorio.tex", tex);
-
-  // Finaliza
-  zip.generateAsync({ type: "blob" }).then(blob => {
-    saveAs(blob, "relatorio_vistoria.zip");
-  });
-}
-
-
-
 
 window.addEventListener("DOMContentLoaded", () => {
   // Garante que os campos dinâmicos já estejam no DOM
