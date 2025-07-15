@@ -669,6 +669,7 @@ function exportarImagensZIP() {
 
 
 function exportarCSV() {
+  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens") || "{}");
   const form = document.getElementById("formulario");
   const data = new FormData(form);
 
