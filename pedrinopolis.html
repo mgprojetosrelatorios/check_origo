@@ -221,7 +221,7 @@
 </div>
 
 
-  <button type="button" class="button" onclick="gerarPDF()">Gerar PDF</button>
+
   <button type="button" class="button" onclick="exportarRelatorioZIP()">Exportar ZIP completo</button>
 
   <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload();">
@@ -238,10 +238,9 @@
   // IDs das caixas conforme sua lista
   const ids = [
     "C00", "CM07", "CM06", "CM05", "CM04", "CM03", "CM02", "CF01", "CF02", "CF03", "CF04", "CF05", "CF06", "CF07",
-     "CF08", "CF09", "CF10", "CF11", "CF12", "CF13", "CF14", "CF15", "CF16", "CF17", "CF18", "CF19", "CF20", "CF21", 
+     "CF08", "CF09", "CF10", "CF11", "CF12", "CF13", "CF14", "CF15", "CF16", "CF17", "CF18", "CF19", "CF20", "CF21",
      "CF22", "C20", "C19", "C18", "C27A", "C06", "CF25", "CF24"
-
-  ];
+  ];
 
   // Objeto para armazenar a imagem em formato base64 para cada caixa
   const imageData = {};
@@ -808,6 +807,18 @@ function exportarRelatorioZIP() {
   const soloOutro = data.get("solo_outro") || "";
   const soloFinal = [solo, soloOutro].filter(Boolean).join(", ") || "Não informado";
 
+  const imagensBloco = Object.entries(imagens).map(([id, base64]) => {
+  const mime = base64.split(",")[0].match(/:(.*?);/)[1];
+  const ext = mime.includes("png") ? "png" : "jpg";
+  const nomeArquivo = `${id}.${ext}`;
+  return `
+\\begin{figure}[H]
+    \\centering
+    \\includegraphics[width=0.5\\textwidth]{imagens/${nomeArquivo}}
+    \\caption{Registro fotográfico da caixa de passagem - ${id}}
+\\end{figure}`.trim();
+}).join("\n\n");
+
   // .tex
   const tex = `
 \\documentclass[12pt,a4paper]{article}
@@ -913,21 +924,8 @@ ${gerarTextoLivre(textosFinais)}
 
 \\section{ANEXO IMAGENS}
 
-\\newcommand{\\incluirImagem}[2]{%
-\\begin{figure}[H]
-    \\centering
-    \\includegraphics[width=0.5\\textwidth]{imagens/#2}
-    \\caption{Registro fotográfico da caixa de passagem - #1}
-\\end{figure}
-}
+${imagensBloco}
 
-\\csvreader[
-    separator=semicolon,
-    head to column names
-]{imagens/imagens.csv}{}%
-{%
-  \\incluirImagem{\\ID}{\\Arquivo}
-}
 
 \\end{document}
 `.trim();

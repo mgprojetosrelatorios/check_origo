@@ -807,6 +807,18 @@ function exportarRelatorioZIP() {
   const soloOutro = data.get("solo_outro") || "";
   const soloFinal = [solo, soloOutro].filter(Boolean).join(", ") || "Não informado";
 
+  const imagensBloco = Object.entries(imagens).map(([id, base64]) => {
+  const mime = base64.split(",")[0].match(/:(.*?);/)[1];
+  const ext = mime.includes("png") ? "png" : "jpg";
+  const nomeArquivo = `${id}.${ext}`;
+  return `
+\\begin{figure}[H]
+    \\centering
+    \\includegraphics[width=0.5\\textwidth]{imagens/${nomeArquivo}}
+    \\caption{Registro fotográfico da caixa de passagem - ${id}}
+\\end{figure}`.trim();
+}).join("\n\n");
+
   // .tex
   const tex = `
 \\documentclass[12pt,a4paper]{article}
@@ -912,21 +924,8 @@ ${gerarTextoLivre(textosFinais)}
 
 \\section{ANEXO IMAGENS}
 
-\\newcommand{\\incluirImagem}[2]{%
-\\begin{figure}[H]
-    \\centering
-    \\includegraphics[width=0.5\\textwidth]{imagens/#2}
-    \\caption{Registro fotográfico da caixa de passagem - #1}
-\\end{figure}
-}
+${imagensBloco}
 
-\\csvreader[
-    separator=semicolon,
-    head to column names
-]{imagens/imagens.csv}{}%
-{%
-  \\incluirImagem{\\ID}{\\Arquivo}
-}
 
 \\end{document}
 `.trim();
