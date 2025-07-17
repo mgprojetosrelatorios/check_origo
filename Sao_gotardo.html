@@ -224,7 +224,7 @@
 
   <button type="button" class="button" onclick="exportarRelatorioZIP()">Exportar ZIP completo</button>
 
-  <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload();">
+  <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload(); limparImagensIndexedDB()">
   Limpar Dados
   </button>
 
@@ -236,13 +236,12 @@
 
 <script>
   // IDs das caixas conforme sua lista
-  const ids = [
+const ids = [
     "C00", "C12", "C13", "CF28", "CF27", "CF26", "CF25", "CF24", "CF23", "CF22", "CF21", "CF20", "CF19", "CF18", "CF17", "CF16",
     "CF15", "CF14", "CF13", "CF12", "CF11", "CF10", "CF09", "CF08", "CF07", "CF06", "CF05", "CF04", "CF03", "CF02", "CF01", "CM02",
-    "CM03", "CM04", "CM05", "CM06", "CM07", "C28", "C27", "C26", "C25", "C24", "C11", "C08", "C07", "C06", "C03", "C04", "C05", "C02", "C01", "CF33"
+    "CM03", "CM04", "CM05", "CM06", "CM07", "C28", "C27", "C26", "C25", "C24", "C11", "C08", "C07", "C06", "C03", "C04", "C05", "C02", "C01", "CF33"
 
   ];
-
 
   // Objeto para armazenar a imagem em formato base64 para cada caixa
   const imageData = {};
@@ -302,22 +301,35 @@
   }, 100);
 });
 
+
+async function salvarImagemIndexedDB(id, base64) {
+  await abrirBancoIndexedDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("imagens", "readwrite");
+    const store = tx.objectStore("imagens");
+    store.put({ id, base64 });
+
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+
+
   // Função para exibir a pré-visualização da imagem e armazená-la em base64
-  function previewImage(input, id) {
+  async function previewImage(input, id) {
   const preview = document.getElementById(`preview_${id}`);
   if (input.files && input.files[0]) {
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
       const base64 = e.target.result;
       preview.src = base64;
-      imageData[id] = base64;
-
-      // Salva imediatamente no localStorage
-      localStorage.setItem("vistoria_imagens", JSON.stringify(imageData));
+      await salvarImagemIndexedDB(id, base64);
     };
     reader.readAsDataURL(input.files[0]);
   }
 }
+
 
   
 function inserirCabecalhoPDF(pdf, origoImg, megaImg) {
@@ -623,20 +635,23 @@ function restaurarFormularioCompleto() {
   }
 }
 
-function restaurarImagensSalvas() {
-  const imagensSalvas = localStorage.getItem("vistoria_imagens");
-  if (!imagensSalvas) return;
+async function restaurarImagensSalvas() {
+  await abrirBancoIndexedDB();
+  const tx = db.transaction("imagens", "readonly");
+  const store = tx.objectStore("imagens");
+  const request = store.getAll();
 
-  const imagens = JSON.parse(imagensSalvas);
+  request.onsuccess = () => {
+    request.result.forEach(({ id, base64 }) => {
+      const preview = document.getElementById(`preview_${id}`);
+      if (preview) preview.src = base64;
 
-  for (const [id, base64] of Object.entries(imagens)) {
-    imageData[id] = base64;
-    const preview = document.getElementById(`preview_${id}`);
-    if (preview) {
-      preview.src = base64;
-    }
-  }
+      // opcional: manter compatível com `imageData`
+      imageData[id] = base64;
+    });
+  };
 }
+
 
 function exportarImagensZIP() {
   const zip = new JSZip();
@@ -716,11 +731,58 @@ function exportarCSV() {
   saveAs(blob, "Relatorio_Caixas.csv");
 }
 
-function exportarRelatorioZIP() {
+const DB_NAME = "VistoriaDB";
+const DB_VERSION = 1;
+let db;
+
+function abrirBancoIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject("Erro ao abrir IndexedDB");
+
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      if (!db.objectStoreNames.contains("imagens")) {
+        db.createObjectStore("imagens", { keyPath: "id" });
+      }
+    };
+  });
+}
+
+async function carregarTodasImagensIndexedDB() {
+  await abrirBancoIndexedDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("imagens", "readonly");
+    const store = tx.objectStore("imagens");
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const resultado = {};
+      request.result.forEach(({ id, base64 }) => {
+        resultado[id] = base64;
+      });
+      resolve(resultado);
+    };
+
+    request.onerror = reject;
+  });
+}
+
+
+async function exportarRelatorioZIP() {
   const zip = new JSZip();
-  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens") || "{}");
+  const imagens = await carregarTodasImagensIndexedDB();
   const form = document.getElementById("formulario");
   const data = new FormData(form);
+
+
+   console.log("Imagens carregadas do localStorage:", Object.keys(imagens));
 
   const normaliza = val => {
     val = val?.toLowerCase();
@@ -941,6 +1003,12 @@ ${imagensBloco}
 }
 
 
+async function limparImagensIndexedDB() {
+  await abrirBancoIndexedDB();
+  const tx = db.transaction("imagens", "readwrite");
+  const store = tx.objectStore("imagens");
+  store.clear();
+}
 
 
 window.addEventListener("DOMContentLoaded", () => {
