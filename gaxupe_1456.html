@@ -33,7 +33,7 @@
   <input type="text" name="equipe" style="width:100%;"><br>
 </div>
 
-  <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload();">
+ <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form_${pagina}'); localStorage.removeItem('vistoria_imagens_${pagina}'); limparImagensIndexedDB(); location.reload(); ">
   Limpar Dados
   </button>
 
@@ -222,9 +222,9 @@
 
 
 
-  <button type="button" class="button" onclick="exportarRelatorioZIP()">Exportar ZIP completo</button>
+  <button type="button" class="button" onclick="exportarRelatorioZIP(); ">Exportar ZIP completo</button>
 
-  <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form'); localStorage.removeItem('vistoria_imagens'); location.reload(); limparImagensIndexedDB()">
+  <button type="button" class="button" onclick="localStorage.removeItem('vistoria_dados_form_${pagina}'); localStorage.removeItem('vistoria_imagens_${pagina}'); limparImagensIndexedDB(); location.reload(); ">
   Limpar Dados
   </button>
 
@@ -236,14 +236,18 @@
 
 <script>
   // IDs das caixas conforme sua lista
-const ids = [
-    "C00", "C29", "C25", "CF01", "CM06", "CM05", "CM04", "CM03", "CF02", "CM02", "CF03", "CF04", "CF05", "CF06", "CF07",
-    "CF08", "CF09", "CF10", "CF11", "CF12", "CF13", "CF14", "CF15", "CF16", "CF17", "CF18", "CF19", "CF20", "CF21", "CF22", 
-    "CF23", "CF24"
+  const ids = [
+    "C00","CF25","CF01","CF02","CF03","CF04","CF05","CF06","CF07","CF08",
+    "CF09","CF10","CF11","CF12","CF13","CF14","CF15","CF16","CF17","CF18",
+    "CF19","CF20","CF21","CM03","CF22"
+
   ];
 
   // Objeto para armazenar a imagem em formato base64 para cada caixa
   const imageData = {};
+
+  const pagina = location.pathname.split("/").pop().replace(".html", "");
+
 
   // Cria os campos para cada registro
   const container = document.getElementById('form-container');
@@ -302,16 +306,20 @@ const ids = [
 
 
 async function salvarImagemIndexedDB(id, base64) {
+  const pagina = location.pathname.split("/").pop().replace(".html", "");
+  const idComPrefixo = `${pagina}_${id}`;
+
   await abrirBancoIndexedDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction("imagens", "readwrite");
     const store = tx.objectStore("imagens");
-    store.put({ id, base64 });
+    store.put({ id: idComPrefixo, base64 });
 
     tx.oncomplete = resolve;
     tx.onerror = reject;
   });
 }
+
 
 
 
@@ -327,21 +335,6 @@ async function salvarImagemIndexedDB(id, base64) {
     };
     reader.readAsDataURL(input.files[0]);
   }
-}
-
-
-  
-function inserirCabecalhoPDF(pdf, origoImg, megaImg) {
-  const marginLeft = 15;
-  const logoHeight = 20;
-  const logoY = 10;
-
-  pdf.addImage(origoImg, 'PNG', marginLeft, logoY, 40, logoHeight);
-  pdf.addImage(megaImg, 'JPEG', 150, logoY, 40, logoHeight);
-
-  // Linha separadora opcional
-  pdf.setDrawColor(200);
-  pdf.line(15, logoY + logoHeight + 3, 195, logoY + logoHeight + 3);
 }
 
 async function gerarPDF() {
@@ -539,52 +532,6 @@ async function gerarPDF() {
   pdf.save("Relatorio_Vistoria.pdf");
 }
 
-
-
-async function gerarDOCX() {
-  const { Document, Packer, Paragraph, TextRun } = window.docx;
-
-  const form = document.getElementById("formulario");
-  const data = new FormData(form);
-
-  const par = (text, bold = false) => new Paragraph({
-    children: [new TextRun({ text, bold })],
-    spacing: { after: 200 }
-  });
-
-  const doc = new Document({
-    sections: [{
-      children: [
-        par("Checklist de Inspeção Técnica – Canalização e Caixas de Passagem (CFTV)", true),
-        par(`Usina: ${data.get("usina") || ""}`),
-        par(`Data: ${data.get("data") || ""}`),
-        par(`Inspetor: ${data.get("inspetor") || ""}`),
-        par(`Equipe: ${data.get("equipe") || ""}`),
-        new Paragraph(""),
-
-        ...ids.flatMap(id => {
-          return [
-            par(`ID: ${id}`, true),
-            par(`Conforme Projeto: ${data.get(`${id}_conforme`) || "N/A"}`),
-            par(`Guia de Passagem: ${data.get(`${id}_guia`) || "N/A"}`),
-            par(`Profundidade OK: ${data.get(`${id}_profundidade`) || "N/A"}`),
-            par(`Tampa OK: ${data.get(`${id}_tampa`) || "N/A"}`),
-            par(`Identificação: ${data.get(`${id}_ident`) || "N/A"}`),
-            par(`Acúmulo de Água: ${data.get(`${id}_agua`) || "N/A"}`),
-            par(`Observações: ${data.get(`${id}_obs`) || ""}`),
-            new Paragraph("")
-          ];
-        })
-      ]
-    }]
-  });
-
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, "Relatorio_Vistoria.docx");
-}
-
-
-
 </script>
 <script>
 const FORM_KEY = "vistoria_dados_form";
@@ -607,12 +554,12 @@ function salvarFormularioCompleto() {
     }
   });
 
-  localStorage.setItem(FORM_KEY, JSON.stringify(dados));
-  localStorage.setItem("vistoria_imagens", JSON.stringify(imageData));
+  localStorage.setItem(`vistoria_dados_form_${pagina}`, JSON.stringify(dados));
+  localStorage.setItem(`vistoria_imagens_${pagina}`, JSON.stringify(imageData));
 }
 
 function restaurarFormularioCompleto() {
-  const salvo = localStorage.getItem(FORM_KEY);
+  const salvo = localStorage.getItem(`vistoria_dados_form_${pagina}`);
   if (!salvo) return;
   const dados = JSON.parse(salvo);
 
@@ -635,6 +582,8 @@ function restaurarFormularioCompleto() {
 }
 
 async function restaurarImagensSalvas() {
+  const pagina = location.pathname.split("/").pop().replace(".html", "");
+
   await abrirBancoIndexedDB();
   const tx = db.transaction("imagens", "readonly");
   const store = tx.objectStore("imagens");
@@ -642,19 +591,23 @@ async function restaurarImagensSalvas() {
 
   request.onsuccess = () => {
     request.result.forEach(({ id, base64 }) => {
-      const preview = document.getElementById(`preview_${id}`);
+      if (!id.startsWith(`${pagina}_`)) return;
+
+      const idOriginal = id.replace(`${pagina}_`, "");
+      const preview = document.getElementById(`preview_${idOriginal}`);
       if (preview) preview.src = base64;
 
-      // opcional: manter compatível com `imageData`
-      imageData[id] = base64;
+      imageData[idOriginal] = base64;
     });
   };
 }
 
 
+
+
 function exportarImagensZIP() {
   const zip = new JSZip();
-  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens") || "{}");
+  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens_XXXX") || "{}");
 
   let count = 0;
   const linhasCSV = ["ID;Arquivo"];
@@ -685,7 +638,7 @@ function exportarImagensZIP() {
 
 
 function exportarCSV() {
-  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens") || "{}");
+  const imagens = JSON.parse(localStorage.getItem("vistoria_imagens_XXXX") || "{}");
   const form = document.getElementById("formulario");
   const data = new FormData(form);
 
@@ -1021,8 +974,6 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
-
-
 
 </body>
 </html>
