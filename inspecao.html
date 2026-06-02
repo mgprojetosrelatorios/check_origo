@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inspeção de Caixas de Passagem</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface2: #EDEBE5;
+    --border: #D8D5CC;
+    --border2: #C5C2B8;
+    --text: #1A1916;
+    --text2: #5C5A54;
+    --text3: #9C9A94;
+    --accent: #2A6B4A;
+    --accent-light: #E8F4EE;
+    --accent-border: #A5D3B8;
+    --danger: #C13E2C;
+    --danger-light: #FDF0EE;
+    --warning: #B8720E;
+    --warning-light: #FDF5E8;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .app-header {
+    background: var(--text);
+    color: #fff;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .app-header .logo {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #6EBF8B;
+  }
+
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .step-indicator .step {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    transition: all 0.3s;
+  }
+
+  .step-indicator .step.active {
+    background: #6EBF8B;
+    border-color: #6EBF8B;
+    color: #fff;
+  }
+
+  .step-indicator .step.done {
+    background: rgba(110,191,139,0.2);
+    border-color: rgba(110,191,139,0.4);
+    color: #6EBF8B;
+  }
+
+  .step-sep { color: rgba(255,255,255,0.2); font-size: 10px; }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.full { grid-template-columns: 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    letter-spacing: 0.02em;
+  }
+
+  .field input, .field select, .field textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    outline: none;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(42,107,74,0.1);
+  }
+
+  .field textarea { resize: vertical; min-height: 80px; }
+
+  .nomenclature-input-area {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .nomenclature-input-area textarea {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    flex: 1;
+    min-height: 120px;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.18s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #1e5438; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--surface2); border-color: var(--border2); }
+
+  .btn-danger {
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid #F5BEB6;
+  }
+  .btn-danger:hover { background: #FBE4E0; }
+
+  .btn-lg {
+    font-size: 15px;
+    padding: 13px 28px;
+    border-radius: var(--radius-lg);
+  }
+
+  .btn-full { width: 100%; justify-content: center; }
+
+  .btn-icon { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 8px; }
+
+  .actions-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+
+  .boxes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .box-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+
+  .box-card:hover { border-color: var(--border2); }
+
+  .box-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .box-number {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .box-name {
+    font-size: 15px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .box-status {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .box-status.complete { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-border); }
+  .box-status.partial { background: var(--warning-light); color: var(--warning); border: 1px solid #F2D49A; }
+  .box-status.empty { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+
+  .chevron {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .chevron.open { transform: rotate(180deg); }
+  .chevron svg { width: 16px; height: 16px; }
+
+  .box-card-body {
+    display: none;
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .box-card-body.open { display: block; }
+
+  .photos-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .photo-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .photo-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .photo-label .badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .badge-open { background: #FEF3E2; color: #B8720E; border: 1px solid #F2D49A; }
+  .badge-closed { background: #EEF2FD; color: #3B5BBD; border: 1px solid #BAC9F5; }
+
+  .photo-upload {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .photo-upload:hover {
+    border-color: var(--accent-border);
+    background: var(--accent-light);
+  }
+
+  .photo-upload input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .photo-upload .up-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3);
+  }
+
+  .photo-upload .up-icon svg { width: 18px; height: 18px; }
+
+  .photo-upload span {
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .photo-preview {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-height: 150px;
+    background: var(--surface2);
+  }
+
+  .photo-preview img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .photo-preview .remove-btn {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+
+  .photo-preview .remove-btn:hover { background: rgba(193,62,44,0.85); }
+
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border-radius: 20px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 20px;
+    transition: width 0.3s;
+  }
+
+  .progress-info {
+    font-size: 12px;
+    color: var(--text3);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .summary-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .summary-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .section-sub {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 1.5rem;
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .alert-warning {
+    background: var(--warning-light);
+    border: 1px solid #F2D49A;
+    color: var(--warning);
+  }
+
+  .alert-success {
+    background: var(--accent-light);
+    border: 1px solid var(--accent-border);
+    color: var(--accent);
+  }
+
+  .page-section { margin-bottom: 2rem; }
+
+  #step1, #step2 { display: none; }
+  #step1.active, #step2.active { display: block; }
+
+  .pdf-generating {
+    display: none;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text2);
+  }
+
+  .pdf-generating.show { display: block; }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .tag {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+    .photos-row { grid-template-columns: 1fr; }
+    .summary-bar { flex-direction: column; }
+    .container { padding: 1.5rem 1rem 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Relatório de Inspeção
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <span id="saveIndicator" style="font-size:11px;color:rgba(110,191,139,0.9);opacity:0;transition:opacity 0.4s;white-space:nowrap"></span>
+    <div class="step-indicator">
+      <div class="step" id="si1">1</div>
+      <div class="step-sep">›</div>
+      <div class="step" id="si2">2</div>
+      <div class="step-sep">›</div>
+      <div class="step" id="si3">3</div>
+    </div>
+  </div>
+</header>
+
+<!-- Restore banner -->
+<div id="restoreBanner" style="display:none;background:#1e3d2a;border-bottom:1px solid #2d5c3f;padding:10px 2rem;align-items:center;gap:12px;flex-wrap:wrap">
+  <svg width="16" height="16" fill="none" stroke="#6EBF8B" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><polyline points="12 6 12 12 16 14"/></svg>
+  <span style="font-size:13px;color:#A8D8B8;flex:1">Rascunho encontrado — salvo em <strong id="restoreTime" style="color:#C8EDD8"></strong>. Seu progresso foi restaurado automaticamente.</span>
+  <button onclick="document.getElementById('restoreBanner').style.display='none'" style="background:transparent;border:1px solid #3d6b50;color:#6EBF8B;font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:inherit">Fechar</button>
+</div>
+
+<div class="container">
+
+  <!-- STEP 0: Dados da inspeção -->
+  <div id="step0">
+    <div class="page-section">
+      <div class="section-title">Nova Inspeção</div>
+      <div class="section-sub">Preencha os dados gerais e adicione as nomenclaturas das caixas de passagem.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Dados Gerais</div>
+      <div class="form-grid" style="margin-bottom:1rem">
+        <div class="field">
+          <label>Nome da Usina *</label>
+          <input type="text" id="usinaName" placeholder="ex: Usina Solar Cerrado III" />
+        </div>
+        <div class="field">
+          <label>Cliente *</label>
+          <input type="text" id="clientName" placeholder="ex: Empresa de Energia S.A." />
+        </div>
+      </div>
+      <div class="form-grid cols-3">
+        <div class="field">
+          <label>Data da Inspeção *</label>
+          <input type="date" id="inspDate" />
+        </div>
+        <div class="field">
+          <label>Responsável Técnico</label>
+          <input type="text" id="responsible" placeholder="Nome do inspetor" />
+        </div>
+        <div class="field">
+          <label>Número do Relatório</label>
+          <input type="text" id="reportNum" placeholder="ex: REL-2025-042" />
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Caixas de Passagem</div>
+      <div class="field">
+        <label>Nomenclaturas (uma por linha) *</label>
+        <div class="nomenclature-input-area">
+          <textarea id="nomenclaturas" placeholder="CP-01&#10;CP-02&#10;CP-03&#10;CP-STR-A&#10;..."></textarea>
+        </div>
+        <div class="hint">Digite cada nomenclatura de caixa em uma linha separada. Linhas em branco são ignoradas.</div>
+      </div>
+
+      <div id="previewTags" class="tag-list" style="margin-top:1rem"></div>
+
+      <div class="actions-bar">
+        <button class="btn btn-primary" onclick="goToStep1()">
+          Avançar para Fotos
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Upload de fotos -->
+  <div id="step1">
+    <div class="summary-bar">
+      <div>
+        <div class="section-title" id="s1Title">Fotos das Caixas</div>
+        <div class="section-sub" style="margin:0">Adicione as fotos de cada caixa aberta e fechada.</div>
+      </div>
+      <div class="summary-stats">
+        <div class="stat">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">Caixas</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statComplete">0</div>
+          <div class="stat-label">Completas</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statPhotos">0</div>
+          <div class="stat-label">Fotos</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="progress-info">
+      <span id="progressText">0 de 0 caixas com foto</span>
+      <span id="progressPct">0%</span>
+    </div>
+
+    <br>
+    <div class="boxes-grid" id="boxesGrid"></div>
+
+    <div class="actions-bar" style="margin-top:2rem">
+      <button class="btn btn-secondary" onclick="goBack()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Voltar
+      </button>
+      <button class="btn btn-primary btn-lg" onclick="goToStep2()">
+        Gerar Relatório PDF
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Geração do PDF -->
+  <div id="step2">
+    <div class="pdf-generating" id="pdfGenerating">
+      <div class="spinner"></div>
+      <div style="font-size:16px;font-weight:500;color:var(--text)">Gerando relatório PDF…</div>
+      <div style="font-size:13px;margin-top:4px">Processando imagens e montando documento</div>
+    </div>
+
+    <div id="pdfDone" style="display:none;text-align:center;padding:3rem 1rem">
+      <div style="width:64px;height:64px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:2px solid var(--accent-border)">
+        <svg width="28" height="28" fill="none" stroke="#2A6B4A" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="font-size:22px;font-weight:600;margin-bottom:0.5rem">Relatório gerado!</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:2rem">O download foi iniciado automaticamente.</div>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="goBack2()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Editar Fotos
+        </button>
+        <button class="btn btn-primary" onclick="downloadAgain()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar Novamente
+        </button>
+        <button class="btn btn-secondary" onclick="resetAll()">
+          Nova Inspeção
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+const STORAGE_KEY = 'inspecao_caixas_draft';
+let boxesData = [];
+let lastPdfBlob = null;
+let saveTimer = null;
+
+// ── PERSISTENCE ──────────────────────────────────────────────
+
+function saveState() {
+  try {
+    const state = {
+      step: currentStep(),
+      usina: document.getElementById('usinaName').value,
+      client: document.getElementById('clientName').value,
+      date: document.getElementById('inspDate').value,
+      responsible: document.getElementById('responsible').value,
+      reportNum: document.getElementById('reportNum').value,
+      nomenclaturas: document.getElementById('nomenclaturas').value,
+      boxesData: boxesData,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    showSaveIndicator();
+  } catch(e) {
+    // localStorage cheio (imagens grandes) — avisa mas não quebra
+    console.warn('Não foi possível salvar rascunho:', e.message);
+    showSaveIndicator('warn');
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 600);
+}
+
+function currentStep() {
+  if (document.getElementById('step1').style.display !== 'none') return 1;
+  if (document.getElementById('step2').style.display !== 'none') return 2;
+  return 0;
+}
+
+function showSaveIndicator(type) {
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  el.textContent = type === 'warn' ? '⚠ Rascunho parcial (armazenamento cheio)' : '✓ Rascunho salvo automaticamente';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2800);
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function clearState() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+function restoreFromState(state) {
+  document.getElementById('usinaName').value = state.usina || '';
+  document.getElementById('clientName').value = state.client || '';
+  document.getElementById('inspDate').value = state.date || new Date().toISOString().split('T')[0];
+  document.getElementById('responsible').value = state.responsible || '';
+  document.getElementById('reportNum').value = state.reportNum || '';
+  document.getElementById('nomenclaturas').value = state.nomenclaturas || '';
+  updateTagPreview();
+
+  if (state.boxesData && state.boxesData.length > 0) {
+    boxesData = state.boxesData;
+  }
+
+  if (state.step === 1 && boxesData.length > 0) {
+    const usina = state.usina || 'Inspeção';
+    document.getElementById('s1Title').textContent = `Fotos — ${usina}`;
+    renderBoxes();
+    setStep(1);
+  } else {
+    setStep(0);
+  }
+}
+
+// ── LIVE PREVIEW ─────────────────────────────────────────────
+
+document.getElementById('nomenclaturas').addEventListener('input', () => {
+  updateTagPreview();
+  scheduleSave();
+});
+
+['usinaName','clientName','inspDate','responsible','reportNum'].forEach(id => {
+  document.getElementById(id).addEventListener('input', scheduleSave);
+});
+
+function updateTagPreview() {
+  const val = document.getElementById('nomenclaturas').value;
+  const names = val.split('\n').map(s => s.trim()).filter(Boolean);
+  const container = document.getElementById('previewTags');
+  if (names.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = names.slice(0, 30).map(n =>
+    `<span class="tag">${escHtml(n)}</span>`
+  ).join('') + (names.length > 30 ? `<span class="tag" style="background:var(--surface2);color:var(--text3);border-color:var(--border)">+${names.length - 30} mais</span>` : '');
+}
+
+function setStep(n) {
+  document.getElementById('step0').style.display = n === 0 ? 'block' : 'none';
+  document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('step2').style.display = n === 2 ? 'block' : 'none';
+  [1,2,3].forEach((i, idx) => {
+    const el = document.getElementById('si'+i);
+    el.className = 'step' + (idx+1 < n+1 ? ' done' : idx+1 === n+1 ? ' active' : '');
+  });
+}
+
+function goToStep1() {
+  const usina = document.getElementById('usinaName').value.trim();
+  const client = document.getElementById('clientName').value.trim();
+  const date = document.getElementById('inspDate').value;
+  const names = document.getElementById('nomenclaturas').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  if (!usina) { alert('Por favor, informe o nome da usina.'); return; }
+  if (!client) { alert('Por favor, informe o nome do cliente.'); return; }
+  if (!date) { alert('Por favor, informe a data da inspeção.'); return; }
+  if (names.length === 0) { alert('Por favor, adicione pelo menos uma nomenclatura de caixa.'); return; }
+
+  // Build boxes data (preserve existing photos if re-entering)
+  const existingMap = {};
+  boxesData.forEach(b => { existingMap[b.name] = b; });
+
+  boxesData = names.map((name, i) => existingMap[name] || {
+    name,
+    index: i + 1,
+    photoAberta: null,
+    photoFechada: null,
+  });
+  boxesData.forEach((b, i) => { b.index = i + 1; });
+
+  document.getElementById('s1Title').textContent = `Fotos — ${usina}`;
+  renderBoxes();
+  setStep(1);
+  saveState();
+  window.scrollTo(0, 0);
+}
+
+function goBack() { setStep(0); saveState(); window.scrollTo(0, 0); }
+function goBack2() { setStep(1); window.scrollTo(0, 0); }
+
+function renderBoxes() {
+  const grid = document.getElementById('boxesGrid');
+  grid.innerHTML = boxesData.map((box, i) => `
+    <div class="box-card" id="boxcard-${i}">
+      <div class="box-card-header" onclick="toggleBox(${i})">
+        <div class="box-number">${box.index}</div>
+        <div class="box-name">${escHtml(box.name)}</div>
+        <div class="box-status ${getStatus(box)}" id="bstatus-${i}">${getStatusLabel(box)}</div>
+        <div class="chevron open" id="chevron-${i}">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="box-card-body open" id="boxbody-${i}">
+        <div class="photos-row">
+          <div class="photo-slot">
+            <div class="photo-label">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              Caixa Aberta
+              <span class="badge badge-open">aberta</span>
+            </div>
+            ${renderPhotoSlot(i, 'Aberta')}
+          </div>
+          <div class="photo-slot">
+            <div class="photo-label">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              Caixa Fechada
+              <span class="badge badge-closed">fechada</span>
+            </div>
+            ${renderPhotoSlot(i, 'Fechada')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  updateStats();
+}
+
+function renderPhotoSlot(boxIdx, type) {
+  const key = 'photo' + type;
+  const box = boxesData[boxIdx];
+  if (box[key]) {
+    return `
+      <div class="photo-preview">
+        <img src="${box[key]}" alt="Foto ${type}" />
+        <button class="remove-btn" onclick="removePhoto(${boxIdx}, '${type}')">×</button>
+      </div>`;
+  }
+  return `
+    <div class="photo-upload" onclick="triggerUpload(${boxIdx}, '${type}')">
+      <input type="file" accept="image/*" onchange="handlePhoto(event, ${boxIdx}, '${type}')" />
+      <div class="up-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <span>Clique para<br>adicionar foto</span>
+    </div>`;
+}
+
+function triggerUpload(boxIdx, type) {
+  // No-op — handled by the input's own click
+}
+
+function handlePhoto(event, boxIdx, type) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    boxesData[boxIdx]['photo' + type] = e.target.result;
+    refreshBoxCard(boxIdx);
+    updateStats();
+    scheduleSave();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(boxIdx, type) {
+  boxesData[boxIdx]['photo' + type] = null;
+  refreshBoxCard(boxIdx);
+  updateStats();
+  scheduleSave();
+}
+
+function refreshBoxCard(i) {
+  const box = boxesData[i];
+  const wasOpen = document.getElementById('boxbody-' + i).classList.contains('open');
+
+  // Update photos row
+  const body = document.getElementById('boxbody-' + i);
+  const slots = body.querySelectorAll('.photo-slot');
+
+  ['Aberta', 'Fechada'].forEach((type, ti) => {
+    const slot = slots[ti];
+    const existing = slot.querySelector('.photo-preview, .photo-upload');
+    if (existing) existing.remove();
+    slot.insertAdjacentHTML('beforeend', renderPhotoSlot(i, type));
+    // Re-bind file input
+    const inp = slot.querySelector('input[type=file]');
+    if (inp) inp.onchange = (ev) => handlePhoto(ev, i, type);
+  });
+
+  // Update status badge
+  const statusEl = document.getElementById('bstatus-' + i);
+  statusEl.className = 'box-status ' + getStatus(box);
+  statusEl.textContent = getStatusLabel(box);
+}
+
+function getStatus(box) {
+  if (box.photoAberta && box.photoFechada) return 'complete';
+  if (box.photoAberta || box.photoFechada) return 'partial';
+  return 'empty';
+}
+
+function getStatusLabel(box) {
+  if (box.photoAberta && box.photoFechada) return '✓ Completa';
+  if (box.photoAberta || box.photoFechada) return '½ Parcial';
+  return 'Sem fotos';
+}
+
+function toggleBox(i) {
+  const body = document.getElementById('boxbody-' + i);
+  const chev = document.getElementById('chevron-' + i);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function updateStats() {
+  const total = boxesData.length;
+  const complete = boxesData.filter(b => b.photoAberta && b.photoFechada).length;
+  const partial = boxesData.filter(b => b.photoAberta || b.photoFechada).length;
+  const photoCount = boxesData.reduce((s, b) => s + (b.photoAberta ? 1 : 0) + (b.photoFechada ? 1 : 0), 0);
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statComplete').textContent = complete;
+  document.getElementById('statPhotos').textContent = photoCount;
+
+  const pct = total > 0 ? Math.round((partial / total) * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${partial} de ${total} caixas com ao menos uma foto`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+async function goToStep2() {
+  setStep(2);
+  document.getElementById('pdfGenerating').classList.add('show');
+  document.getElementById('pdfDone').style.display = 'none';
+  window.scrollTo(0, 0);
+
+  await new Promise(r => setTimeout(r, 80));
+  try {
+    lastPdfBlob = await generatePDF();
+    downloadPDF(lastPdfBlob);
+    clearState();
+    document.getElementById('pdfGenerating').classList.remove('show');
+    document.getElementById('pdfDone').style.display = 'block';
+  } catch(e) {
+    alert('Erro ao gerar PDF: ' + e.message);
+    setStep(1);
+  }
+}
+
+function downloadAgain() {
+  if (lastPdfBlob) downloadPDF(lastPdfBlob);
+}
+
+function downloadPDF(blob) {
+  const usina = document.getElementById('usinaName').value.trim().replace(/\s+/g, '_');
+  const date = document.getElementById('inspDate').value;
+  const fname = `Relatorio_Inspecao_${usina}_${date}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function generatePDF() {
+  const usina = document.getElementById('usinaName').value.trim();
+  const client = document.getElementById('clientName').value.trim();
+  const date = document.getElementById('inspDate').value;
+  const responsible = document.getElementById('responsible').value.trim();
+  const reportNum = document.getElementById('reportNum').value.trim();
+
+  const dateFormatted = date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  const pw = 210, ph = 297;
+  const ml = 18, mr = 18, mt = 18;
+  const cw = pw - ml - mr;
+  let y = mt;
+
+  const GREEN = [42, 107, 74];
+  const DARK = [26, 25, 22];
+  const GRAY = [92, 90, 84];
+  const LIGHT_BG = [245, 243, 238];
+  const WHITE = [255, 255, 255];
+  const BORDER = [216, 213, 204];
+  const GREEN_LIGHT = [168, 210, 184];
+
+  function addPage() {
+    doc.addPage();
+    y = mt;
+    drawFooter();
+  }
+
+  function checkY(needed) {
+    if (y + needed > ph - 22) addPage();
+  }
+
+  function drawFooter() {
+    const pageNum = doc.internal.getNumberOfPages();
+    doc.setFillColor(...LIGHT_BG);
+    doc.rect(0, ph - 14, pw, 14, 'F');
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.line(0, ph - 14, pw, ph - 14);
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY);
+    doc.text(`${usina} — Relatório de Inspeção de Caixas de Passagem`, ml, ph - 5);
+    doc.text(`Pág. ${pageNum}`, pw - mr, ph - 5, { align: 'right' });
+  }
+
+  // ─── COVER PAGE ───
+  doc.setFillColor(...DARK);
+  doc.rect(0, 0, pw, 90, 'F');
+
+  doc.setFillColor(...GREEN);
+  doc.rect(0, 90, pw, 4, 'F');
+
+  // Logo/badge
+  doc.setFillColor(...GREEN);
+  doc.roundedRect(ml, 24, 12, 12, 2, 2, 'F');
+  doc.setFontSize(8);
+  doc.setTextColor(...WHITE);
+  doc.text('CP', ml + 6, 31.5, { align: 'center' });
+
+  doc.setFontSize(9);
+  doc.setTextColor(180, 220, 195);
+  doc.text('RELATÓRIO DE INSPEÇÃO', ml + 16, 31);
+
+  doc.setFontSize(22);
+  doc.setTextColor(...WHITE);
+  doc.setFont(undefined, 'bold');
+  doc.text(usina, ml, 55);
+  doc.setFont(undefined, 'normal');
+
+  doc.setFontSize(12);
+  doc.setTextColor(200, 210, 205);
+  doc.text('Caixas de Passagem — Inspeção Fotográfica', ml, 64);
+
+  doc.setFontSize(10);
+  doc.setTextColor(150, 170, 160);
+  doc.text(`Data: ${dateFormatted}`, ml, 80);
+
+  y = 108;
+
+  // Info card
+  const infoRows = [
+    ['Cliente', client || '—'],
+    ['Responsável Técnico', responsible || '—'],
+    ['Número do Relatório', reportNum || '—'],
+    ['Data da Inspeção', dateFormatted],
+    ['Total de Caixas', String(boxesData.length)],
+    ['Fotos Coletadas', String(boxesData.reduce((s, b) => s + (b.photoAberta ? 1 : 0) + (b.photoFechada ? 1 : 0), 0))],
+  ];
+
+  doc.setFillColor(...LIGHT_BG);
+  doc.roundedRect(ml, y, cw, 8 + infoRows.length * 10 + 8, 3, 3, 'F');
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(ml, y, cw, 8 + infoRows.length * 10 + 8, 3, 3, 'S');
+
+  doc.setFontSize(8);
+  doc.setTextColor(...GREEN);
+  doc.setFont(undefined, 'bold');
+  doc.text('INFORMAÇÕES DA INSPEÇÃO', ml + 8, y + 7);
+  doc.setFont(undefined, 'normal');
+
+  infoRows.forEach(([label, value], i) => {
+    const ry = y + 14 + i * 10;
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GRAY);
+    doc.text(label, ml + 8, ry);
+    doc.setTextColor(...DARK);
+    doc.setFont(undefined, 'bold');
+    doc.text(value, ml + cw - 8, ry, { align: 'right' });
+    doc.setFont(undefined, 'normal');
+    if (i < infoRows.length - 1) {
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.2);
+      doc.line(ml + 8, ry + 3, ml + cw - 8, ry + 3);
+    }
+  });
+
+  y += 8 + infoRows.length * 10 + 8 + 10;
+
+  // Summary row
+  const complete = boxesData.filter(b => b.photoAberta && b.photoFechada).length;
+  const partial = boxesData.filter(b => (b.photoAberta || b.photoFechada) && !(b.photoAberta && b.photoFechada)).length;
+  const sem = boxesData.filter(b => !b.photoAberta && !b.photoFechada).length;
+
+  const stats = [
+    ['TOTAL', String(boxesData.length), [220, 218, 212]],
+    ['COMPLETAS', String(complete), [...GREEN]],
+    ['PARCIAIS', String(partial), [184, 114, 14]],
+    ['SEM FOTO', String(sem), [180, 180, 180]],
+  ];
+
+  const sw = (cw - 9) / 4;
+  stats.forEach(([label, val, color], i) => {
+    const sx = ml + i * (sw + 3);
+    doc.setFillColor(...WHITE);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(sx, y, sw, 22, 2, 2, 'FD');
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...color);
+    doc.text(val, sx + sw / 2, y + 13, { align: 'center' });
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...GRAY);
+    doc.text(label, sx + sw / 2, y + 20, { align: 'center' });
+  });
+
+  y += 32;
+  drawFooter();
+
+  // ─── BOXES PAGES ───
+  for (const box of boxesData) {
+    addPage();
+
+    // Box header bar
+    doc.setFillColor(...GREEN);
+    doc.rect(ml, y, cw, 14, 'F');
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...WHITE);
+    doc.text(`${String(box.index).padStart(2, '0')}  ${box.name}`, ml + 6, y + 9.5);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.text(dateFormatted, ml + cw - 6, y + 9.5, { align: 'right' });
+
+    y += 18;
+
+    const imgW = (cw - 8) / 2;
+    const imgH = 95;
+
+    const photos = [
+      { label: 'CAIXA ABERTA', data: box.photoAberta },
+      { label: 'CAIXA FECHADA', data: box.photoFechada },
+    ];
+
+    for (let pi = 0; pi < 2; pi++) {
+      const ph2 = photos[pi];
+      const px = ml + pi * (imgW + 8);
+
+      // Outer card
+      doc.setFillColor(...LIGHT_BG);
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(px, y, imgW, imgH + 16, 2, 2, 'FD');
+
+      // Label bar
+      doc.setFillColor(...DARK);
+      doc.roundedRect(px, y, imgW, 10, 2, 2, 'F');
+      doc.setFillColor(...DARK);
+      doc.rect(px, y + 5, imgW, 5, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...WHITE);
+      doc.text(ph2.label, px + imgW / 2, y + 7, { align: 'center' });
+      doc.setFont(undefined, 'normal');
+
+      if (ph2.data) {
+        // Determine image format
+        let fmt = 'JPEG';
+        if (ph2.data.startsWith('data:image/png')) fmt = 'PNG';
+        else if (ph2.data.startsWith('data:image/webp')) fmt = 'WEBP';
+        try {
+          doc.addImage(ph2.data, fmt, px + 2, y + 12, imgW - 4, imgH - 4, undefined, 'MEDIUM');
+        } catch(e) {
+          doc.setFillColor(220, 218, 212);
+          doc.rect(px + 2, y + 12, imgW - 4, imgH - 4, 'F');
+          doc.setFontSize(9);
+          doc.setTextColor(...GRAY);
+          doc.text('Erro ao carregar imagem', px + imgW / 2, y + 12 + (imgH - 4) / 2, { align: 'center' });
+        }
+      } else {
+        doc.setFillColor(235, 233, 228);
+        doc.rect(px + 2, y + 12, imgW - 4, imgH - 4, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(...GRAY);
+        doc.text('Foto não disponível', px + imgW / 2, y + 12 + (imgH - 4) / 2, { align: 'center' });
+      }
+    }
+
+    y += imgH + 22;
+  }
+
+  // Return as blob
+  return doc.output('blob');
+}
+
+function resetAll() {
+  if (!confirm('Tem certeza que deseja iniciar uma nova inspeção? Todo o progresso atual será apagado.')) return;
+  clearState();
+  boxesData = [];
+  lastPdfBlob = null;
+  document.getElementById('usinaName').value = '';
+  document.getElementById('clientName').value = '';
+  document.getElementById('inspDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('responsible').value = '';
+  document.getElementById('reportNum').value = '';
+  document.getElementById('nomenclaturas').value = '';
+  document.getElementById('previewTags').innerHTML = '';
+  setStep(0);
+  window.scrollTo(0, 0);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+(function init() {
+  const saved = loadState();
+  if (saved && saved.savedAt && (Date.now() - saved.savedAt < 7 * 24 * 60 * 60 * 1000)) {
+    restoreFromState(saved);
+    // Show restore banner if there was real progress
+    const hasProgress = saved.boxesData && saved.boxesData.some(b => b.photoAberta || b.photoFechada);
+    if (hasProgress || saved.step === 1) {
+      document.getElementById('restoreBanner').style.display = 'flex';
+      const d = new Date(saved.savedAt);
+      document.getElementById('restoreTime').textContent =
+        d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+  } else {
+    setStep(0);
+    document.getElementById('si1').className = 'step active';
+    document.getElementById('inspDate').value = new Date().toISOString().split('T')[0];
+  }
+})();
+</script>
+</body>
+</html>
