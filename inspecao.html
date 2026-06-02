@@ -574,7 +574,114 @@
     .summary-bar { flex-direction: column; }
     .container { padding: 1.5rem 1rem 3rem; }
   }
+
+  .field input[readonly], .field textarea[readonly] {
+    background: var(--surface2);
+    color: var(--text2);
+    cursor: default;
+    border-color: var(--border);
+  }
+
+  .locked-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--warning-light);
+    color: var(--warning);
+    border: 1px solid #F2D49A;
+    border-radius: 20px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .link-box {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    margin-top: 10px;
+  }
+
+  .link-box input {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    color: var(--text2);
+    outline: none;
+    min-width: 0;
+  }
+
+  .copy-btn {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0 16px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.18s;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { background: #1e5438; }
+  .copy-btn.copied { background: #1e5438; }
+
+  .link-generator-toggle {
+    font-size: 13px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  #linkGenPanel {
+    display: none;
+    margin-top: 1.5rem;
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    background: var(--accent-light);
+    padding: 1.25rem 1.5rem;
+  }
+
+  #linkGenPanel.open { display: block; }
+
+  .link-gen-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .link-gen-sub {
+    font-size: 12px;
+    color: #4a8a6a;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
 </style>
+
 </head>
 <body>
 
@@ -651,11 +758,33 @@
 
       <div id="previewTags" class="tag-list" style="margin-top:1rem"></div>
 
-      <div class="actions-bar">
+      <div class="actions-bar" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <button class="link-generator-toggle" onclick="toggleLinkGen()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Gerar link pré-preenchido
+        </button>
         <button class="btn btn-primary" onclick="goToStep1()">
           Avançar para Fotos
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
+      </div>
+
+      <div id="linkGenPanel">
+        <div class="link-gen-title">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Link pré-preenchido para a equipe
+        </div>
+        <div class="link-gen-sub">
+          Os dados dos campos acima serão embutidos na URL. A equipe abrirá o link com tudo já preenchido e bloqueado — só precisam adicionar as fotos.
+        </div>
+        <div class="link-box">
+          <input type="text" id="generatedLink" readonly placeholder="Preencha os campos acima para gerar o link…" />
+          <button class="copy-btn" id="copyBtn" onclick="copyLink()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar
+          </button>
+        </div>
+        <div id="linkHint" style="font-size:11px;color:#4a8a6a;margin-top:6px"></div>
       </div>
     </div>
   </div>
@@ -1311,12 +1440,148 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── URL PARAMS ───────────────────────────────────────────────
+
+function readUrlParams() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    usina:       p.get('usina')       || '',
+    client:      p.get('cliente')     || '',
+    date:        p.get('data')        || '',
+    responsible: p.get('resp')        || '',
+    reportNum:   p.get('relatorio')   || '',
+    caixas:      p.get('caixas')      || '',  // comma or pipe separated
+  };
+}
+
+function applyUrlParams(params) {
+  const lock = (id, val) => {
+    if (!val) return;
+    const el = document.getElementById(id);
+    el.value = val;
+    el.setAttribute('readonly', true);
+    // Add locked badge to label
+    const label = el.closest('.field')?.querySelector('label');
+    if (label && !label.querySelector('.locked-badge')) {
+      label.insertAdjacentHTML('beforeend', '<span class="locked-badge">🔒 pré-preenchido</span>');
+    }
+  };
+
+  lock('usinaName',  params.usina);
+  lock('clientName', params.client);
+  lock('responsible', params.responsible);
+  lock('reportNum',  params.reportNum);
+
+  if (params.date) {
+    lock('inspDate', params.date);
+  }
+
+  if (params.caixas) {
+    const names = params.caixas.split(/[|,]/).map(s => s.trim()).filter(Boolean);
+    const ta = document.getElementById('nomenclaturas');
+    ta.value = names.join('\n');
+    ta.setAttribute('readonly', true);
+    const label = ta.closest('.field')?.querySelector('label');
+    if (label && !label.querySelector('.locked-badge')) {
+      label.insertAdjacentHTML('beforeend', '<span class="locked-badge">🔒 pré-preenchido</span>');
+    }
+    updateTagPreview();
+  }
+}
+
+function hasUrlParams() {
+  const p = new URLSearchParams(window.location.search);
+  return p.has('usina') || p.has('caixas');
+}
+
+// ── LINK GENERATOR ───────────────────────────────────────────
+
+function toggleLinkGen() {
+  const panel = document.getElementById('linkGenPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) updateGeneratedLink();
+}
+
+function updateGeneratedLink() {
+  const base = window.location.origin + window.location.pathname;
+  const usina = document.getElementById('usinaName').value.trim();
+  const client = document.getElementById('clientName').value.trim();
+  const date = document.getElementById('inspDate').value;
+  const resp = document.getElementById('responsible').value.trim();
+  const rel = document.getElementById('reportNum').value.trim();
+  const noms = document.getElementById('nomenclaturas').value
+    .split('\n').map(s => s.trim()).filter(Boolean);
+
+  const p = new URLSearchParams();
+  if (usina)  p.set('usina', usina);
+  if (client) p.set('cliente', client);
+  if (date)   p.set('data', date);
+  if (resp)   p.set('resp', resp);
+  if (rel)    p.set('relatorio', rel);
+  if (noms.length) p.set('caixas', noms.join('|'));
+
+  const url = p.toString() ? `${base}?${p.toString()}` : base;
+  document.getElementById('generatedLink').value = url;
+
+  const hint = document.getElementById('linkHint');
+  const charLen = url.length;
+  if (!usina && !noms.length) {
+    hint.textContent = 'Preencha ao menos a Usina ou as Caixas para gerar o link.';
+  } else if (charLen > 2000) {
+    hint.textContent = `⚠ Link longo (${charLen} caracteres) — pode não funcionar em alguns apps de mensagem. Prefira encurtadores de URL.`;
+  } else {
+    hint.textContent = `✓ Link pronto (${charLen} caracteres) — ${noms.length} caixa${noms.length !== 1 ? 's' : ''} incluída${noms.length !== 1 ? 's' : ''}.`;
+  }
+}
+
+// Regenerate link whenever any field changes (if panel is open)
+['usinaName','clientName','inspDate','responsible','reportNum','nomenclaturas'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    if (document.getElementById('linkGenPanel').classList.contains('open')) {
+      updateGeneratedLink();
+    }
+  });
+});
+
+function copyLink() {
+  const val = document.getElementById('generatedLink').value;
+  if (!val || val.includes('Preencha')) return;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Copiado!`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar`;
+    }, 2500);
+  }).catch(() => {
+    document.getElementById('generatedLink').select();
+    document.execCommand('copy');
+  });
+}
+
 // ── INIT ─────────────────────────────────────────────────────
 (function init() {
+  const urlParams = readUrlParams();
+  const fromUrl = hasUrlParams();
+
+  if (fromUrl) {
+    // URL params take full priority — ignore any saved draft
+    setStep(0);
+    document.getElementById('si1').className = 'step active';
+    if (!urlParams.date) {
+      document.getElementById('inspDate').value = new Date().toISOString().split('T')[0];
+    }
+    applyUrlParams(urlParams);
+    // Hide the link generator button — the field-recipient doesn't need it
+    const toggleBtn = document.querySelector('.link-generator-toggle');
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    return;
+  }
+
   const saved = loadState();
   if (saved && saved.savedAt && (Date.now() - saved.savedAt < 7 * 24 * 60 * 60 * 1000)) {
     restoreFromState(saved);
-    // Show restore banner if there was real progress
     const hasProgress = saved.boxesData && saved.boxesData.some(b => b.photoAberta || b.photoFechada);
     if (hasProgress || saved.step === 1) {
       document.getElementById('restoreBanner').style.display = 'flex';
